@@ -1,2 +1,56 @@
-<h1>Time Series Clustering</h1>
-<app-time-series-chart> </app-time-series-chart>
+<div id="tooltip" class="tooltip" style="opacity: 0;"></div>
+<mat-grid-list cols="5" rowHeight="300px" gutterSize="16px">
+    <mat-grid-tile [colspan]="3" [rowspan]="1">
+      <div class="scrollable-container" >
+        <ng-template appDynamicHost [option]="selectedOption"></ng-template>
+        
+        
+      </div>
+    </mat-grid-tile>
+    <mat-grid-tile class="button-grid-tile" [colspan]="2" [rowspan]="1">
+      <div class="scrollable-container">
+        <div class="button-container">
+          <h1>Seleccionar tipo de visualización</h1>
+          @for (button of buttons; track button.component;) {
+            <button (click)="onButtonClick(button.component)">
+              <img [src]="button.imgSrc" [alt]="button.altText" />
+              
+              
+            </button>
+            @if(button.component === selectedButton) {
+              <mat-select [(value)]="selectedOption" (selectionChange)="onOptionChange($event.value)">
+                <mat-option *ngFor="let option of options" [value]="option">{{option}}</mat-option>
+              </mat-select>
+                
+              
+            }
+              
+            } @empty {
+            <li>There are no items.</li>
+            }
+          
+        </div>
+      </div>
+    </mat-grid-tile>
+    <mat-grid-tile class="new-grid-tile" [colspan]="3" [rowspan]="1">
+      
+      <div class="scrollable-container">
+        
+      </div>
+      
+    </mat-grid-tile>
+    <mat-grid-tile class="radar-grid-tile" [colspan]="2" [rowspan]="1">
+      <div class="scrollable-container">
+       
+      </div>
+    </mat-grid-tile>
+    <mat-grid-tile class="sliced-grid-tile" [colspan]="3" [rowspan]="1">
+      <div class="scrollable-container">
+        
+      </div>
+    </mat-grid-tile>
+    <!-- Add more mat-grid-tile elements for additional charts -->
+  </mat-grid-list>
+  <app-horizon-eda-visualization></app-horizon-eda-visualization>
+ 
+  

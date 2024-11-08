@@ -19,8 +19,8 @@ export class TimeSeriesChartComponent implements OnInit {
     // Your existing D3 code here
     // ...
     const margin = {top: 20, right: 20, bottom: 30, left: 50},
-                  width = 960 - margin.left - margin.right,
-                  height = 500 - margin.top - margin.bottom;
+                  width = 800 - margin.left - margin.right,
+                  height = 200 - margin.top - margin.bottom;
     
 
 
@@ -72,7 +72,44 @@ export class TimeSeriesChartComponent implements OnInit {
                   .attr("d", line )
                   .attr("stroke", color(cluster))
                   .style("fill","none")
-                  .attr("data-subject", d['Sujeto']); 
+                  .attr("data-subject", d['Sujeto'])
+                  .on("mouseover", (event: MouseEvent) => {
+                    const tooltip = d3.select("#tooltip");
+                    tooltip.transition().duration(200).style("opacity", .9);
+                    tooltip.html("<div id='smallChart'></div>")
+                      .style("left", (event.pageX + 5) + "px")
+                      .style("top", (event.pageY - 28) + "px");
+      
+                      const smallWidth = 180, smallHeight = 100;
+
+                      const smallSvg = d3.select("#smallChart").append("svg")
+                        .attr("width", smallWidth)
+                        .attr("height", smallHeight);
+                  
+                      const smallX = d3.scaleLinear().range([0, smallWidth]);
+                      const smallY = d3.scaleLinear().range([smallHeight, 0]);
+                  
+                      smallX.domain([0, timeSeries.length - 1]);
+                      smallY.domain([0, d3.max(timeSeries) as number]);
+                  
+                      const smallLine = d3.line<number>()
+                        .x((d, i) => smallX(i))
+                        .y(d => smallY(d));
+                  
+                      smallSvg.append("path")
+                        .datum(timeSeries)
+                        .attr("class", "line")
+                        .attr("d", smallLine)
+                        .attr("stroke", "red")
+                        .attr("stroke-width", 1.5)
+                        .attr("fill", "none")
+                        .text(`Sujeto ${d['Sujeto']}`);
+                  })
+                  .on("mouseout", () => {
+                    const tooltip = d3.select("#tooltip");
+                    tooltip.transition().duration(500).style("opacity", 0);
+                    tooltip.html("");
+                  });
                 clusterGroup.append("text")
                 .attr("x", width - 120)
                 .attr("y", y(d3.mean(values, d => +d['Valor_0']) as number))

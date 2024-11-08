@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title></title>
+</head>
+
+<body>
+    <!-- load the d3.js library -->
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script>
+
+    // set the dimensions and margins of the graph
+    var margin = { top: 20, right: 20, bottom: 30, left: 50 },
+        width = 960 - margin.left - margin.right,
+        height = 500 - margin.top - margin.bottom;
+
+    // append the svg obgect to the body of the page
+    // appends a 'group' element to 'svg'
+    // moves the 'group' element to the top left margin
+    var svg = d3.select("body")
+    	.append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom);
+
+    svg.append("defs").append("clipPath")
+    	.attr("id", "clip")
+  		.append("rect")
+    	.attr("width", width)
+    	.attr("height", height);
+
+    // set the ranges
+    var x = d3.scaleLinear().range([0, width]);
+    var y = d3.scaleLinear().range([height, 0]);
+
+    // scale the range of the data
+    x.domain([-50, 50]);
+    y.domain([-50, 50]);
+
+    var xAxis = d3.axisBottom(x);
+    var yAxis = d3.axisLeft(y);
+
+    // add the X Axis
+    var gX = svg.append("g")
+        .attr("transform", "translate(" + margin.left + ", " + (margin.top + height) + ")")
+        .call(xAxis);
+
+    // add the Y Axis
+    var gY = svg.append("g")
+    	.attr("transform", "translate(" + margin.left + ", " + margin.top + ")")
+        .call(yAxis);
+
+    // Zoom functionality
+    var zoom = d3.zoom()
+	    .scaleExtent([.5, 20])
+	    .extent([[0, 0], [width, height]])
+	    .on("zoom", zoomed);
+
+    var event_rect = svg.append("rect")
+    	.attr("width", width)
+    	.attr("height", height)
+    	.style("fill", "none")
+    	.style("pointer-events", "all")
+    	.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
+    	.call(zoom);
+
+    var points_g = svg.append("g")
+        .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
+  		.attr("clip-path", "url(#clip)");
+  		// .classed("points_g", true);
+
+    var getdata = function() {
+        var dataset = []
+        for (var i = 0; i < 20; i++) {
+            var x = d3.randomUniform(-50, 50)();
+            var y = d3.randomUniform(-50, 50)();
+            dataset.push({ "x": x, "y": y });
+        }
+        return dataset;
+    }
+
+    // Get the data
+    var data = getdata()
+
+    // format the data
+    data.forEach(function(d) {
+        d.x = +d.x;
+        d.y = +d.y;
+    });
+
+    // add the dots
+    var points = points_g.selectAll("circle")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("r", 5)
+        .attr("cx", function(d) { return x(d.x); })
+        .attr("cy", function(d) { return y(d.y); })
+        .on('click', function(d, i) {
+        	
+        })
+        .on('mouseover', function(d, i) {
+        	console.log("Mouse over");
+        });
+    
+
+    function zoomed() {
+	    var new_x = d3.event.transform.rescaleX(x);
+	    var new_y = d3.event.transform.rescaleY(y);
+		// update axes
+	    gX.call(xAxis.scale(new_x));
+	    gY.call(yAxis.scale(new_y));
+	    points.data(data)
+	    	.attr('cx', function(d) {return new_x(d.x)})
+	     	.attr('cy', function(d) {return new_y(d.y)});
+	}
+
+
+    </script>
+</body>
+
+</html>

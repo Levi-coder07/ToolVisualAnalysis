@@ -1,0 +1,33 @@
+<h3>{{title}}</h3>
+<div id="tooltip" class="tooltip" style="opacity: 0;"></div>
+<div class="container">
+  
+    <!-- Buttons for visualization type -->
+    <div class="buttons">
+      <button (click)="onButtonClick(0)">Overview</button>
+      <button (click)="onButtonClick(1)">All - Events</button>
+      <button (click)="onButtonClick(2)">Fun - Event</button>
+      <button (click)="onButtonClick(3)">TSST - Event</button>
+    </div>
+    <div class="controls">
+    <!-- Selector for number of clusters -->
+    <mat-form-field appearance="fill" class = "small-form">
+      <mat-label>Number of Clusters</mat-label>
+      <mat-select [(value)]="selectedClusterCount" (selectionChange)="onClusterCountChange($event.value)">
+        <mat-option *ngFor="let count of clusterCounts" [value]="count">{{count}}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Selector for metric type -->
+    <mat-form-field appearance="fill" class = "small-form">
+      <mat-label>Type of Metric</mat-label>
+      <mat-select [(value)]="selectedMetricType" (selectionChange)="onMetricTypeChange($event.value)">
+        <mat-option value="dtw">DTW</mat-option>
+        <mat-option value="softdtw">SoftDTW</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <!-- Chart container -->
+  <div id="chart-overview"></div>
+</div>

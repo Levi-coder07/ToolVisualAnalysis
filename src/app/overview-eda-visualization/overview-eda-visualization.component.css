@@ -1,0 +1,20 @@
+#chart-overview{
+    background-color: aliceblue;
+}
+.tooltip {
+    position: absolute;
+    text-align: center;
+    width: 50px;
+    height: auto;
+    padding: 10px;
+    font: 12px sans-serif;
+    background: lightsteelblue;
+    border: 1px solid #ccc;
+    pointer-events: none;
+    /* Optional: Add z-index to ensure it appears above other elements */
+    z-index: 1000;
+}
+h3 {
+    font-size: 1rem;
+    line-height: 1.0;
+}
