@@ -1,5 +1,5 @@
 import { Component , ViewChild } from '@angular/core';
-import { NgFor } from '@angular/common';
+import { NgFor, NgIf } from '@angular/common';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { TimeSeriesChartComponent } from './time-series-chart/time-series-chart.component';
 import { OverviewEdaVisualizationComponent } from './overview-eda-visualization/overview-eda-visualization.component';
@@ -13,20 +13,32 @@ import { PcaVisualizationComponent } from './pca-visualization/pca-visualization
 import { MatOptionSelectionChange } from '@angular/material/core';
 import { isNgContainer } from '@angular/compiler';
 import { NgModule } from '@angular/core';
+import { NewSparkboxExplorationComponent } from "./new-sparkbox-exploration/new-sparkbox-exploration.component";
+import { AeVisualizationComponent } from './ae-visualization/ae-visualization.component';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet,TimeSeriesChartComponent, RouterLink, OverviewEdaVisualizationComponent, MatGridListModule, MatSelectModule ,HorizonEdaVisualizationComponent,NgFor,DynamicHostDirective],
+  imports: [RouterOutlet, TimeSeriesChartComponent, AeVisualizationComponent,NewSparkboxExplorationComponent, RouterLink, OverviewEdaVisualizationComponent, MatGridListModule, MatSelectModule, HorizonEdaVisualizationComponent, NgFor, DynamicHostDirective, NewSparkboxExplorationComponent, NgIf, PcaVisualizationComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
 
 export class AppComponent {
+  @ViewChild(DynamicHostDirective, { static: false }) dynamicHost!: DynamicHostDirective;
+  showGrid = true;
+  onToggleGrid(newValue: boolean): void {
+    console.log('Toggle Grid:', newValue);
+    this.showGrid = !this.showGrid;
+  }
   title = 'visual-analysis-tool';
-  @ViewChild(DynamicHostDirective, { static: true }) dynamicHost!: DynamicHostDirective;
+  selectedPrueba: string = 'TSST';
   options = ['pca', 'tsne'];
   selectedOption: string = this.options[0];
+  autoencoder: string = "autoencoder";
+  estadistico: string = "estadistico";
   componentInstance: any;
+  @ViewChild('pcaVisualization') pcaVisualization!: PcaVisualizationComponent;
+  @ViewChild('aeVisualization') aeVisualization!: AeVisualizationComponent;
   selectedButton: typeof PcaVisualizationComponent | null = PcaVisualizationComponent;
   buttons = [
     { imgSrc: 'assets/img/visualization1.png', altText: 'Visualization 1', component: OverviewEdaVisualizationComponent },
@@ -35,14 +47,22 @@ export class AppComponent {
 
   constructor() {}
 
-  ngOnInit() {
-    this.createComponent(OverviewEdaVisualizationComponent);
-  }
-
-  onButtonClick(component: any) {
-    this.createComponent(component);
+  onInit() {
+    
+    
+    
+    
   }
   
+ 
+  goBack() {
+    this.showGrid = false; // Go back to the initial component
+  }
+  onRectangleClick(data: any) {
+    console.log('Rectangle clicked:', data);
+    this.showGrid = true; // Show the grid layout when a rectangle is clicked
+  }
+
   createComponent(component: any) {
     if (this.dynamicHost) {
       const viewContainerRef = this.dynamicHost.viewContainerRef;
@@ -53,13 +73,23 @@ export class AppComponent {
     } else {
       console.error('DynamicHostDirective is not available.');
     }
+    
+  }
+  onPruebaClicked(prueba: string) {
+    console.log('Prueba clicked:', prueba);
+    this.selectedPrueba = prueba;
+    if (this.pcaVisualization) {
+      this.pcaVisualization.onButtonClick(this.selectedPrueba);
+    } // Pass the clicked "prueba" to the other component
   }
   onOptionChange(option: string) {
     
-    this.componentInstance.option = this.selectedOption;
-    if (this.componentInstance) {
-      this.componentInstance.optionChanged();
+   
+    if (this.pcaVisualization) {
+      this.pcaVisualization.optionChanged(this.selectedOption);
     }
+     
+    this.aeVisualization.optionChanged(this.selectedOption);
   }
 }
 

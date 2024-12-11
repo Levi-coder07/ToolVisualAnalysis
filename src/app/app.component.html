@@ -1,22 +1,27 @@
 <div id="tooltip" class="tooltip" style="opacity: 0;"></div>
-<mat-grid-list cols="5" rowHeight="300px" gutterSize="16px">
-    <mat-grid-tile [colspan]="3" [rowspan]="1">
-      <div class="scrollable-container" >
-        <ng-template appDynamicHost [option]="selectedOption"></ng-template>
-        
-        
-      </div>
-    </mat-grid-tile>
-    <mat-grid-tile class="button-grid-tile" [colspan]="2" [rowspan]="1">
+
+<mat-grid-list cols="5" rowHeight="90" gutterSize="16px">
+  <mat-grid-tile [colspan]="1" [rowspan]="2">
+    <div class="scrollable-container" >
+     
+      
+      
+    </div>
+  </mat-grid-tile>
+      <mat-grid-tile [colspan]="4" [rowspan]="2">
+        <div class="scrollable-container" >
+          <app-new-sparkbox-exploration (pruebaClicked)="onPruebaClicked($event)"></app-new-sparkbox-exploration>
+          
+          
+        </div>
+      </mat-grid-tile>
+      
+    <mat-grid-tile class="button-grid-tile" [colspan]="1" [rowspan]="2">
       <div class="scrollable-container">
         <div class="button-container">
           <h1>Seleccionar tipo de visualización</h1>
           @for (button of buttons; track button.component;) {
-            <button (click)="onButtonClick(button.component)">
-              <img [src]="button.imgSrc" [alt]="button.altText" />
-              
-              
-            </button>
+            
             @if(button.component === selectedButton) {
               <mat-select [(value)]="selectedOption" (selectionChange)="onOptionChange($event.value)">
                 <mat-option *ngFor="let option of options" [value]="option">{{option}}</mat-option>
@@ -32,19 +37,48 @@
         </div>
       </div>
     </mat-grid-tile>
-    <mat-grid-tile class="new-grid-tile" [colspan]="3" [rowspan]="1">
+    <mat-grid-tile [colspan]="2" [rowspan]="2">
+      <div class="scrollable-container" >
+        <app-pca-visualization #pcaVisualization  [option]="selectedOption" [prueba]="selectedPrueba" ></app-pca-visualization>
+        
+        
+      </div>
+    </mat-grid-tile>
+    <mat-grid-tile [colspan]="2" [rowspan]="2">
+      <div class="scrollable-container" >
+        <app-ae-visualization [option]="selectedOption" ></app-ae-visualization>
+        
+        
+      </div>
+    </mat-grid-tile>
+   
+    <mat-grid-tile class="eda-grid-tile" [colspan]="3" [rowspan]="1">
       
       <div class="scrollable-container">
         
       </div>
       
     </mat-grid-tile>
-    <mat-grid-tile class="radar-grid-tile" [colspan]="2" [rowspan]="1">
+    <mat-grid-tile class="radar-grid-tile" [colspan]="2" [rowspan]="2">
       <div class="scrollable-container">
        
       </div>
     </mat-grid-tile>
-    <mat-grid-tile class="sliced-grid-tile" [colspan]="3" [rowspan]="1">
+    <mat-grid-tile class="temp-grid-tile" [colspan]="3" [rowspan]="1">
+      
+      <div class="scrollable-container">
+        
+      </div>
+      
+    </mat-grid-tile>
+    <mat-grid-tile class="bvp-grid-tile" [colspan]="3" [rowspan]="1">
+      
+      <div class="scrollable-container">
+        
+      </div>
+      
+    </mat-grid-tile>
+    <mat-grid-tile class="sliced-grid-tile" [colspan]="5" [rowspan]="1">
       <div class="scrollable-container">
         
       </div>

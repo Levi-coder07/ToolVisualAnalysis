@@ -6,5 +6,6 @@ import { Directive, ViewContainerRef, Input } from '@angular/core';
 })
 export class DynamicHostDirective {
   @Input() option! : string;
+  @Input() signal! : string;
   constructor(public viewContainerRef: ViewContainerRef) {} // Expose ViewContainerRef
 }

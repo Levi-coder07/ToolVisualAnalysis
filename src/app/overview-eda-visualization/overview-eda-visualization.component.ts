@@ -235,9 +235,9 @@ ngOnInit(): void {
 
 async function plot_segments(data: SujetoData, questionData: SujetoQuestion) {
   console.log(questionData.Cuestionarios);
-  const margin_focus = { top: 50, right: 20, bottom: 30, left: 50 };
-  const width_focus = 800 - margin_focus.left - margin_focus.right;
-  const height_focus = 200 - margin_focus.top - margin_focus.bottom;
+  const margin_focus = { top: 50, right: 20, bottom: 15, left: 50 };
+  const width_focus = 750 - margin_focus.left - margin_focus.right;
+  const height_focus = 160 - margin_focus.top - margin_focus.bottom;
 
   const xScaleSelected = d3.scaleTime()
     .domain([d3.min(data.Fecha.map(f => new Date(f))) as Date, d3.max(data.Fecha.map(f => new Date(f))) as Date])
@@ -351,9 +351,9 @@ async function plot_segments(data: SujetoData, questionData: SujetoQuestion) {
 
 async function plot_chart_segments(data: SujetoData , questionData : SujetoQuestion ) {
   plot_radar( questionData  )
-  const margin_focus = {top: 50, right: 20, bottom: 30, left: 40};
+  const margin_focus = {top: 20, right: 20, bottom: 10, left: 20};
       const width_focus = 800- margin_focus.left - margin_focus.right;
-      const height_focus = 200 - margin_focus.top - margin_focus.bottom;
+      const height_focus = 140 - margin_focus.top - margin_focus.bottom;
         // Al hacer clic en la línea, actualizar el gráfico secundario
         const selectedData = data.Datos;
         
@@ -401,7 +401,7 @@ intervalosPruebas.forEach((d:IntervalosPruebas) => {
       // Crear contenedor SVG para el gráfico secundario temporal
       const overviewSvg = newGridTile.append("svg")
         .attr("width", width_focus + margin_focus.left + margin_focus.right)
-        .attr("height", height_focus + margin_focus.top + margin_focus.bottom)
+        .attr("height", height_focus - 20)
         .append("g")
         .attr("transform", `translate(${margin_focus.left},${margin_focus.top})`);
 

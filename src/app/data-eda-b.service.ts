@@ -7,21 +7,37 @@ import { SujetoData } from './sujeto_question.model'; // Replace with your actua
   providedIn: 'root'
 })
 export class DataService {
-  private dataSubject = new BehaviorSubject<SujetoData[]>([]);
-  data$: Observable<SujetoData[]> = this.dataSubject.asObservable();
+  private tempDataSubject = new BehaviorSubject<SujetoData[]>([]);
+  private edaDataSubject = new BehaviorSubject<SujetoData[]>([]);
+
+  tempData$: Observable<SujetoData[]> = this.tempDataSubject.asObservable();
+  edaData$: Observable<SujetoData[]> = this.edaDataSubject.asObservable();
 
   constructor() {
-    this.loadData();
+    
   }
 
-  private loadData(): void {
+  public loadData(): void {
+    d3.json<SujetoData[]>('assets/temp_complete_A.json')
+      .then((data) => {
+        if (data === undefined) {
+          console.error("No data loaded.");
+          return;
+        }
+        this.tempDataSubject.next(data); // Store data in the BehaviorSubject
+      })
+      .catch((error) => {
+        console.error('Error loading JSON:', error);
+      });
+  }
+  public loadDataEDA(): void {
     d3.json<SujetoData[]>('assets/eda_complete_A.json')
       .then((data) => {
         if (data === undefined) {
           console.error("No data loaded.");
           return;
         }
-        this.dataSubject.next(data); // Store data in the BehaviorSubject
+        this.edaDataSubject.next(data); // Store data in the BehaviorSubject
       })
       .catch((error) => {
         console.error('Error loading JSON:', error);
