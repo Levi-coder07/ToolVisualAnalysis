@@ -98,7 +98,7 @@ export class NewSparkboxExplorationComponent {
   names: any;
   public colorVector : string[] = [];
   private clusters: ClusterInfo[] = [];
-  constructor(private renderer: Renderer2 , private DataService2 : DataService) {
+  constructor(private renderer: Renderer2 , private DataService : DataService) {
     this.platformId = inject(PLATFORM_ID);
     
   }
@@ -128,8 +128,8 @@ export class NewSparkboxExplorationComponent {
     return;
 }
 console.log("questionSpark",questiondata[4].Cuestionarios)
-    this.DataService2.loadDataEDA();
-    this.DataService2.edaData$.subscribe(data => {
+    this.DataService.loadDataEDA();
+    this.DataService.edaData$.subscribe(data => {
       this.data = data;
       // Aquí puedes usar this.data en tu componente
       const values = this.data;
@@ -167,14 +167,10 @@ private async plot_sparkplot(data: SujetoData , questionData : SujetoQuestion) {
         // Al hacer clic en la línea, actualizar el gráfico secundario
         
         
-        const xScaleSelected = d3.scaleTime()
-        .domain([d3.min(data.Fecha.map(f => new Date(f))) as Date, d3.max(data.Fecha.map(f => new Date(f))) as Date])
-        .range([0, width_focus]); // Ancho del gráfico secundario temporal
+       // Ancho del gráfico secundario temporal
     
       // Escala Y para el gráfico secundario temporal
-      const yScaleSelected = d3.scaleLinear()
-        .domain([d3.min(data.Datos)!, d3.max(data.Datos)!]) // Ajusta el dominio según tus datos
-        .range([height_focus, 0]); // Alto del gráfico secundario temporal
+      // Alto del gráfico secundario temporal
     
       // Generador de línea para el gráfico secundario temporal
      
@@ -199,9 +195,16 @@ private async plot_sparkplot(data: SujetoData , questionData : SujetoQuestion) {
       return;
   }
   let newGridTile = d3.select("#chart-sparkplot");
-  
- 
- 
+  const yScaleSelected = d3.scaleLinear()
+        .domain([0, 15]) // Ajusta el dominio según tus datos
+        .range([height_focus, 0]); 
+  const xScaleSelected = d3.scaleTime()
+  .domain([
+    new Date(intervalosPruebas[4].Pruebas[0].Inicio), // Convert to Date
+    new Date(intervalosPruebas[4].Pruebas[4].Fin) // Convert to Date
+  ])
+  .range([0, width_focus]);
+
     
 intervalosPruebas.forEach((d:IntervalosPruebas) => {
             console.log("Aqui ",d.Pruebas);
@@ -214,17 +217,62 @@ intervalosPruebas.forEach((d:IntervalosPruebas) => {
         .attr("height", height_focus + margin_focus.top + margin_focus.bottom)
         .append("g")
         .attr("transform", `translate(${margin_focus.left + 10},${margin_focus.top})`);
-
+/*
       // Agregar la línea seleccionada al gráfico secundario temporal
-     
+      const clipPaths = overviewSvg.append("defs");
+      let datosFiltrados:any;
+      let totalData: any[] = []; 
+      let segment = intervalosPruebas[4].Pruebas
+      segment.forEach((prueba,index) => {
+        datosFiltrados = data.Datos.filter((d, i) => {
+          const fecha = new Date(data.Fecha[i]);
+          return fecha >= new Date(prueba.Inicio) && fecha <= new Date(prueba.Fin);
+        });
+        totalData.push(datosFiltrados);
+      });
+      segment.forEach((Prueba,index) =>{
+        console.log("Inicio", new Date(Prueba.Inicio))
+        clipPaths.append("clipPath")
+          .attr("id", `clip-segment-${index}`)
+          .append("rect")
+          .attr("x", xScaleSelected(new Date(Prueba.Inicio))) // Segment start time
+          .attr("y", 0)
+          .attr("width", xScaleSelected(new Date(Prueba.Fin)) - xScaleSelected(new Date(Prueba.Inicio))) // Segment duration
+          .attr("height", this.height);
+        });
       
-       
+      
+        segment.forEach((segment, index) => {
+        const segmentGroup = overviewSvg.append("g")
+          .attr("clip-path", `url(#clip-segment-${index})`);
+        
+        // Filter data for the current segment
+        const segmentData = data.Datos.filter(d => {
+          const time = new Date(d);
+          return time >= new Date(segment.Inicio) && time <= new Date(segment.Fin);
+        });
+        let fechasFiltradasSolo = data.Fecha.filter((f) => {
+          const fecha = new Date(f);
+          return !isNaN(fecha.getTime()) && fecha >= new Date(segment.Inicio) && fecha <= new Date(segment.Fin);
+        }).map((f) => new Date(f));
+      
+        // Plot the line
+        segmentGroup.append("path")
+          .datum(segmentData)
+          .attr("class", "line")
+          .attr("d", lineSelected)
+          .style("stroke", "steelblue")
+          .style("stroke-width", 2)
+          .style("fill", "none");
+      });
+      
+       */
       
       
-      intervalosPruebas.forEach((d: IntervalosPruebas) => {
+      let segment = intervalosPruebas[4].Pruebas
        
         
-        d.Pruebas.forEach((prueba: IntervaloPrueba) => {
+        segment.forEach((prueba,index) => {
             const inicio = new Date(prueba.Inicio);
             const fin = new Date(prueba.Fin);
             
@@ -278,7 +326,7 @@ intervalosPruebas.forEach((d:IntervalosPruebas) => {
                       
                       .on("dblclick", function() {
                         // Perform actions on double-click
-                        console.log("Double-clicked on:", d);
+                        console.log("Double-clicked on:",prueba);
                         d3.selectAll(`rect.Test`).transition().duration(500).attr("fill","rgba(0, 150, 255, 0.2)");
                         // Example: Change the fill color of the double-clicked path
                       
@@ -301,9 +349,18 @@ intervalosPruebas.forEach((d:IntervalosPruebas) => {
                 console.error('questionData or questionData.Cuestionario is undefined');
             }
         });
-    });
+   
     
-
+    overviewSvg.append("g")
+    .attr("transform", `translate(0,${height_focus})`)
+    .call(d3.axisBottom(xScaleSelected))
+    ;
+    if (!questionData) {
+            console.error("Loaded JSON is undefined or null");
+            return;
+        }
+    overviewSvg.append("g")
+    .call(d3.axisLeft(yScaleSelected).ticks(4));
 }
 
 }

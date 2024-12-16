@@ -9,9 +9,11 @@ import { SujetoData } from './sujeto_question.model'; // Replace with your actua
 export class DataService {
   private tempDataSubject = new BehaviorSubject<SujetoData[]>([]);
   private edaDataSubject = new BehaviorSubject<SujetoData[]>([]);
+  private bvpDataSubject = new BehaviorSubject<SujetoData[]>([]);
 
   tempData$: Observable<SujetoData[]> = this.tempDataSubject.asObservable();
   edaData$: Observable<SujetoData[]> = this.edaDataSubject.asObservable();
+  bvpData$: Observable<SujetoData[]> = this.bvpDataSubject.asObservable();
 
   constructor() {
     
@@ -38,6 +40,19 @@ export class DataService {
           return;
         }
         this.edaDataSubject.next(data); // Store data in the BehaviorSubject
+      })
+      .catch((error) => {
+        console.error('Error loading JSON:', error);
+      });
+  }
+   public loadDataBVP(): void {
+    d3.json<SujetoData[]>('assets/bvp_complete_A.json')
+      .then((data) => {
+        if (data === undefined) {
+          console.error("No data loaded.");
+          return;
+        }
+        this.bvpDataSubject.next(data); // Store data in the BehaviorSubject
       })
       .catch((error) => {
         console.error('Error loading JSON:', error);

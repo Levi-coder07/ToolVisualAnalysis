@@ -64,7 +64,7 @@ interface pca_data {
 })
 export class PcaVisualizationComponent {
   @Input() option! : string;
-  @Input() signal!: string;
+  @Input() signal: string = "eda";
   @Input() prueba!: string;
   senial: string= this.signal;
   selectedClusterCount: number = 2; // Default cluster count
@@ -74,6 +74,7 @@ export class PcaVisualizationComponent {
   type = 0;
   globalMaxY = 0;
   private platformId: object;
+  
   private  margin = {top: 10, right: 0, bottom: 10, left: 20};
   private width = 450 - this.margin.left - this.margin.right;
   private height = 140 - this.margin.top - this.margin.bottom;
@@ -81,11 +82,12 @@ export class PcaVisualizationComponent {
   private edadata: SujetoData[] = [] ;
   private pca_data : pca_data[] = [];
   public title : string = "Scatter Plot - Overview";
-  names_pca: string[] = ["eda_pca","eda_segments_pca","fun_pca_eda", "tsst_pca_eda" ];
+  names_pca: string[] = ["eda_pca","eda_segments_pca","fun_pca_", "tsst_pca_" ];
   names_tsne: string[] = ["eda_tsne","eda_segments_tsne","fun_tsne_eda", "tsst_tsne_eda" ];
   names_options_cluster: string[] = ["complete","segments","fun", "TSST" ];
   metrics: string[] = ["dtw" ,"softdtw" ];
   names: any;
+  private name_compose! : string ;
   public colorVector : string[] = [];
   private clusters: ClusterInfo[] = [];
   constructor(private renderer: Renderer2 , private DataService : DataService) {
@@ -102,11 +104,11 @@ export class PcaVisualizationComponent {
     }
     this.valor = index;
     this.title = `Scatter Plot - ${this.names[index]}`;
-    this.pointPlot(this.data, this.names[index]);
+    this.pointPlot(this.data, this.names[index],this.prueba,this.signal);
   }
-  onButtonClick(test: String): void {
+  onButtonClick(test: string): void {
     let selectedNames = this.option === 'pca' ? this.names_pca : this.names_tsne;
-
+    this.prueba = test;
     // Busca el nombre correspondiente al test en el array
     let selectedName = selectedNames.find(name => name.toLowerCase().includes(test.toLowerCase()));
     console.log("TESTSELECTED",selectedName)
@@ -114,8 +116,8 @@ export class PcaVisualizationComponent {
       console.error(`Test "${test}" no encontrado en el array.`);
       return;
     }
-    this.title = `Scatter Plot - ${selectedName}`;
-    this.pointPlot(this.data, selectedName);
+    this.title = `Scatter Plot - ${this.signal}-${this.prueba}`;
+    this.pointPlot(this.data, selectedName,this.prueba,this.signal);
   }
   private handleZoom(e : any): void {
     
@@ -123,27 +125,19 @@ export class PcaVisualizationComponent {
     
     .attr('transform', e.transform);
   }
-  onClusterCountChange(count: number): void {
+  onSingalChange(signal: string): void {
     if(this.option == 'pca'){
       this.names = this.names_pca;
     }else{
       this.names = this.names_tsne;
     }
-    this.selectedClusterCount = count;
-    this.pointPlot(this.data,this.names[this.valor]);
+    this.signal = signal;
+    this.pointPlot(this.data,this.names[this.valor],this.prueba,this.signal);
   }
 
-  onMetricTypeChange(type: string): void {
-    if(this.option == 'pca'){
-      this.names = this.names_pca;
-    }else{
-      this.names = this.names_tsne;
-    }
-    this.selectedMetricType = type;
-    this.pointPlot(this.data,this.names[this.valor]);
-  }
+
   
-  private pointPlot(data : SujetoData[],name: string){
+  private pointPlot(data : SujetoData[],name: string,test:string,signal:string){
     let edadata1 : SujetoData[];
     let bvpdata : SujetoData[];
     let colorPoint :string;
@@ -154,8 +148,8 @@ export class PcaVisualizationComponent {
   
     });
     this.DataService.loadDataBVP();
-    this.DataService.bvpData$.subscribe(data1 => {
-      bvpdata = data1;
+    this.DataService.bvpData$.subscribe(data2 => {
+      bvpdata = data2;
     });
     const svgSelection = d3.selectAll(`#chart-overview svg`);
 
@@ -168,8 +162,8 @@ export class PcaVisualizationComponent {
   
     
     .attr("transform", `translate(${this.margin.left},${this.margin.top})`);
-   
-    d3.json<pca_data[]>(`assets/${name}.json`).then((pca_tsst) => {
+   console.log(`assets/${name}${signal}.json`);
+    d3.json<pca_data[]>(`assets/${name}${signal}.json`).then((pca_tsst) => {
 
       if (pca_tsst === undefined) {
         console.error("No data loaded.");
@@ -351,9 +345,9 @@ export class PcaVisualizationComponent {
         console.log(questiondata[index2]); 
         plot_radar( questiondata[index2] );
         colorV.push(color)
-            plot_chart_segments(data[index2],questiondata[index2],1 ,"EDA");
-            plot_chart_segments(edadata1[index2],questiondata[index2],2 ,"TEMP");
-            plot_chart_segments(edadata1[index2],questiondata[index2],3 ,"TEMP");
+            plot_chart_segments(edadata1[index2],questiondata[index2],1 ,"EDA",test);
+            plot_chart_segments(data[index2],questiondata[index2],2 ,"TEMP",test);
+            plot_chart_segments(bvpdata[index2],questiondata[index2],3 ,"BVP",test);
             plot_segments(edadata1[index2],questiondata[index2],colorV)
            
             console.log(colorPoint)
@@ -404,14 +398,14 @@ export class PcaVisualizationComponent {
   private async createChart() {
     // Your existing D3 code here
     this.DataService.loadData();  
-    this.DataService.tempData$.subscribe(data => {
-      this.data = data;
+    this.DataService.tempData$.subscribe(data1 => {
+      this.data = data1;
       // Aquí puedes usar this.data en tu componente
       const values = this.data;
       
      let name:string = "eda_pca" ;
     
-      this.pointPlot(values, name);
+      this.pointPlot(values, name,this.prueba,this.signal);
      
     
            
@@ -526,14 +520,13 @@ overviewSvg.append("g")
     return;
   }
   
-  console.log("Data", data)
-  console.log("Intervalos",intervalosPruebas)
+ 
   
 // Mapeo para definir el índice de cada prueba en el orden deseado
 const segmento = intervalosPruebas.find(
   (seg) => Array.isArray(seg.Subject) && seg.Subject.includes(data.Sujeto)
 );
-  console.log("Segment",segmento);
+  
   if (!segmento) {
     console.error(`No se encontraron pruebas para el sujeto: ${data.Sujeto}`);
     return undefined;
@@ -562,7 +555,7 @@ segmento.Pruebas.forEach((prueba,index) => {
 });
 GlobalData.push(totalData);
 allSegments.push(segmento.Pruebas)
-console.log(segmento.Pruebas);  // Ver el orden de las pruebas después de ordenar
+ // Ver el orden de las pruebas después de ordenar
 let inicioBase = new Date(segmento.Pruebas[0].Inicio); // Inicio de la primera prueba
 function formatDate(date: Date): string {
   const year = date.getFullYear();
@@ -623,7 +616,6 @@ const xScaleSelectedNew = d3.scaleTime()
       fechasLocalesSolo.push(fechasFiltradasSolo);
       
       
-      console.log("fechas", fechasFiltradasSolo)
       const lineId = `line-${data.Sujeto}-${index}`;
       const lineSegment = d3.line<number>()
         .x((d, i) => xScaleSelectedNew(new Date(fechasFiltradasSolo[i]))) // Mapeo de la fecha filtrada
@@ -743,7 +735,7 @@ const xScaleSelectedNew = d3.scaleTime()
 }
 let j = 0;
 async function refresh_segments(data: SujetoData, questionData: SujetoQuestion, color : any) {
-  console.log(questionData.Cuestionarios);
+  
   const maxDatoNuevo = d3.max(data.Datos)!; // Máximo del nuevo sujeto
   globalMaxY = Math.max(globalMaxY, maxDatoNuevo); // Actualizar el rango global si el nuevo máximo es mayor
 
@@ -777,7 +769,7 @@ const height_focus = 140 - margin_focus.top - margin_focus.bottom;
   let checkSVG = d3.select(".sliced-grid-tile .scrollable-container").select("svg");
   
   if(checkSVG.empty()){
-    console.log("checkSVG", checkSVG);
+    
     overviewSvg = d3.select(".sliced-grid-tile .scrollable-container").append("svg")
     .attr("width", width_focus + margin_focus.left + margin_focus.right)
     .attr("height", height_focus + margin_focus.top + margin_focus.bottom)
@@ -942,7 +934,7 @@ const xScaleSelectedNew = d3.scaleTime()
         // Crear o actualizar el path de la línea
         const existingLine = overviewSvg.select(`#${lineId}`);
         if (existingLine.empty()) {
-          console.log("Index",GlobalData.length)
+         
           overviewSvg.append("path")
             .attr("id", lineId)
             .datum(segmentData)
@@ -967,15 +959,406 @@ const xScaleSelectedNew = d3.scaleTime()
     });
     
 }
+let EdaminDatos: number[] = [];
+let EdamaxDatos: number[] = [];
+let TempminDatos: number[] = [];
+let TempmaxDatos: number[] = [];
+let BvpminDatos: number[] = [];
+let BvpmaxDatos: number[] = [];
+let EdaData: number[][] = [];
+let TemppData: number[][] = [];
+let BvpData: number[][] = [];
+let SujetosGlobal:string[]=[];
+async function plot_chart_segments(data: SujetoData , questionData : SujetoQuestion , type : any,signal : string,test:string) {
+  
+  const margin_focus = {top: 50, right: 30, bottom: 30, left: 20};
+      const width_focus = 800- margin_focus.left ;
+      const height_focus = 100 - margin_focus.top;
+        // Al hacer clic en la línea, actualizar el gráfico secundario
+        const selectedData = data.Datos;
+        let intervalosPruebas: IntervalosPruebas[] | undefined;
+        try {
+          intervalosPruebas = await d3.json("assets/intervalos_pruebas1.json");
+         
+      } catch (error) {
+          console.error("Error loading JSON:", error);
+          return;
+      }
+      if (!intervalosPruebas) {
+        console.error("Loaded JSON is undefined or null");
+        return;
+    }
+    let datosFiltrados: number[];
+    let totalData: any[] = []; 
+   
+    const segmento = intervalosPruebas.find(
+      (seg) => Array.isArray(seg.Subject) && seg.Subject.includes(data.Sujeto)
+    );
+   
+    if (!segmento) {
+      console.error("Loaded JSON is undefined or null");
+      return;
+  }
+    const pruebaName = test;
+const prueba = segmento.Pruebas.find((p) => p.Prueba === pruebaName);
 
-async function plot_chart_segments(data: SujetoData , questionData : SujetoQuestion , type : any,signal : string) {
+console.log("Sujetos", SujetosGlobal)
+// Verificar si la prueba fue encontrada
+if (!prueba) {
+  console.error("Loaded JSON is undefined or null");
+      return;
+} 
+      datosFiltrados = data.Datos.filter((d, i) => {
+        const fecha = new Date(data.Fecha[i]);
+        return fecha >= new Date(prueba.Inicio) && fecha <= new Date(prueba.Fin);
+      });
+      
+      totalData.push(datosFiltrados);
+      let fechasFiltradasSolo = data.Fecha.filter((f) => {
+        const fecha = new Date(f);
+        return !isNaN(fecha.getTime()) && fecha >= new Date(prueba.Inicio) && fecha <= new Date(prueba.Fin);
+      }).map((f) => new Date(f));
+      
+      const xScaleSelected = d3.scaleTime()
+      .domain([
+        d3.min(fechasFiltradasSolo) as Date,
+        d3.max(fechasFiltradasSolo) as Date
+      ])
+      .range([0, width_focus]); 
+      
+      // Escala Y para el gráfico secundario temporal
+      const yScaleSelected = d3.scaleLinear()
+        .domain([d3.min(datosFiltrados)!, d3.max(datosFiltrados)!]) // Ajusta el dominio según tus datos
+        .range([height_focus, 0]); // Alto del gráfico secundario temporal
+        let yScaleSelectedNew = d3.scaleLinear()
+        .domain([d3.min(EdaminDatos)!, d3.max(EdamaxDatos)!]) // Ajusta el dominio según tus datos
+        .range([height_focus, 0]);  
+        let lineSelected = d3.line<number>()
+        .x((d, i) => xScaleSelected(new Date(fechasFiltradasSolo[i])))
+        .y(d => yScaleSelectedNew(d))
+        .curve(d3.curveMonotoneX);
+      // Generador de línea para el gráfico secundario temporal
+      let newGridTile = d3.select(".eda-grid-tile .scrollable-container");
+      if(type ==1){
+        SujetosGlobal.push(data.Sujeto)
+        EdaData.push(datosFiltrados);
+        EdaminDatos.push(d3.min(datosFiltrados)!);
+          EdamaxDatos.push(d3.max(datosFiltrados)!);
+        newGridTile = d3.select(".eda-grid-tile .scrollable-container");
+        yScaleSelectedNew = d3.scaleLinear()
+            .domain([d3.min(EdaminDatos)!, d3.max(EdamaxDatos)!]) // Ajusta el dominio según tus datos
+            .range([height_focus, 0]);
+            lineSelected = d3.line<number>()
+            .x((d, i) => xScaleSelected(new Date(fechasFiltradasSolo[i])))
+            .y(d => yScaleSelectedNew(d))
+            .curve(d3.curveMonotoneX);
+      }else if (type==2){
+        TemppData.push(datosFiltrados);
+        TempminDatos.push(d3.min(datosFiltrados)!);
+        TempmaxDatos.push(d3.max(datosFiltrados)!);
+        newGridTile = d3.select(".temp-grid-tile .scrollable-container");
+        yScaleSelectedNew = d3.scaleLinear()
+            .domain([d3.min(TempminDatos)!, d3.max(TempmaxDatos)!]) // Ajusta el dominio según tus datos
+            .range([height_focus, 0]);
+            lineSelected = d3.line<number>()
+        .x((d, i) => xScaleSelected(new Date(fechasFiltradasSolo[i])))
+        .y(d => yScaleSelectedNew(d))
+        .curve(d3.curveMonotoneX);
+      }else{
+        BvpData.push(datosFiltrados);
+        BvpminDatos.push(d3.min(datosFiltrados)!);
+        BvpmaxDatos.push(d3.max(datosFiltrados)!);
+        newGridTile = d3.select(".bvp-grid-tile .scrollable-container");
+        yScaleSelectedNew = d3.scaleLinear()
+            .domain([d3.min(BvpminDatos)!, d3.max(BvpmaxDatos)!]) // Ajusta el dominio según tus datos
+            .range([height_focus, 0]);
+            lineSelected = d3.line<number>()
+        .x((d, i) => xScaleSelected(new Date(fechasFiltradasSolo[i])))
+        .y(d => yScaleSelectedNew(d))
+        .curve(d3.curveMonotoneX);
+      }
+      let zoom = d3.zoom()
+     
+        .scaleExtent([1, 5])
+        .translateExtent([[0, 0], [width_focus, height_focus]]) // Set zoom scale range
+        .on("zoom", zoomed) as any;
+      let overviewSvg = newGridTile.select<SVGGElement>("svg g");
+      
+  if (overviewSvg.empty()) {
+    
+    // Create SVG container if it doesn't exist
+    overviewSvg = newGridTile.append("svg")
+            .attr("width", width_focus)
+            .attr("height", height_focus + 50 )
+            .call(zoom)
+            .append("g")
+            .attr("transform", `translate(15,5)`);
+
+    // Add X and Y axes only the first time
+    overviewSvg.append("g")
+      .attr("transform", `translate(0,${height_focus})`)
+      .call(d3.axisBottom(xScaleSelected));
+
+    overviewSvg.append("g")
+    .attr("class","y-axis")
+      .call(d3.axisLeft(yScaleSelectedNew).ticks(4));
+  } else {
+    
+    // Update the Y-axis with the new scale
+    overviewSvg.select<SVGGElement>(".y-axis")
+      .transition() // Add a smooth transition
+      .duration(500)
+      .call(d3.axisLeft(yScaleSelectedNew).ticks(4));
+  }
+  const tooltip = d3.select("body").append("div")
+    .style("position", "absolute")
+    .style("background", "#f9f9f9")
+    .style("border", "1px solid #ccc")
+    .style("padding", "5px 10px")
+    .style("border-radius", "5px")
+    .style("pointer-events", "none")
+    .style("opacity", 0); 
+
+  if(type==1){
+    
+    overviewSvg.selectAll( `path`).remove();
+    EdaData.forEach((pathData,index) => {
+      console.log("Times");
+      overviewSvg.append("path")
+        .datum(pathData)
+        .attr("class", `line-eda-path-${type}`) // Unique class for each path
+        .attr("d", lineSelected)
+        .style("stroke", "red") // Customize stroke color
+        .style("stroke-width", 1)
+        .style("fill", "none");
+    });
+  }
+  
+  else if(type ==2){
+    overviewSvg.selectAll( `path`).remove();
+    console.log("lenghtTemp",TemppData.length); 
+  TemppData.forEach((pathData,index) => {
+    overviewSvg.append("path")
+      .datum(pathData)
+      .attr("class", `line-path line-${type}-${index}`) // Unique class for each path
+      .attr("d", lineSelected)
+      .style("stroke", "blue") // Customize stroke color
+      .style("stroke-width", 1)
+      .style("fill", "none");
+  });
+  }else{
+    overviewSvg.selectAll( `path`).remove();
+    overviewSvg.selectAll( `tooltip`).remove();
+    console.log("lenghtTemp",TemppData.length);
+  BvpData.forEach((pathData,index) => {
+    overviewSvg.append("path")
+      .datum(pathData)
+      .attr("class", `line-bvp-path-${type}`) // Unique class for each path
+      .attr("d", lineSelected)
+      .style("stroke", "black") // Customize stroke color
+      .style("stroke-width", 1)
+      .style("fill", "none")
+      .on("mouseover", function () {
+        tooltip.style("opacity", 1);
+    })
+    .on("mousemove", function (event) {
+        tooltip.html(`Usuario: BVP ${SujetosGlobal[index]}`)
+            .style("left", `${event.pageX + 10}px`)
+            .style("top", `${event.pageY - 20}px`);
+    })
+    .on("mouseout", function () {
+        tooltip.style("opacity", 0);
+    });
+  });
+  }
+ 
+  
+  function zoomed({ transform }: { transform: ZoomTransform }){
+        
+    const newXScale = transform.rescaleX(xScaleSelected); // Rescale X-axis
+    const newYScale = transform.rescaleY(yScaleSelectedNew); // Rescale Y-axis (optional)
+
+    // Update axes with new scales
+    overviewSvg.select<SVGGElement>(".x-axis")
+        .call(d3.axisBottom(newXScale));
+    overviewSvg.select<SVGGElement>(".y-axis")
+        .call(d3.axisLeft(newYScale).ticks(4));
+
+       lineSelected = d3.line<number>()
+        .x((d, i) => newXScale(new Date(fechasFiltradasSolo[i])))
+        .y(d => newYScale(d)) 
+        .curve(d3.curveMonotoneX);
+        if(type==1){
+          overviewSvg.selectAll("path.line-eda-path-1")
+          .data(EdaData)
+           .attr("d", lineSelected)
+        }
+        if(type==3){
+          overviewSvg.selectAll("path.line-bvp-path-3")
+          .data(BvpData)
+           .attr("d", lineSelected)
+        }
+   
+  }
+
+}
+function plot_radar(cuestionarios: SujetoQuestion){
+  let offsetX = 5;
+  
+  
+
+    const featuress = ['PANAS', 'STAI', 'DIM', 'SSSQ'];  // Define the features
+
+             
+              d3.select(".radar-grid-tile .scrollable-container").selectAll("*").remove();
+              const radarSvg = d3.select(".radar-grid-tile .scrollable-container").append("svg")
+              .attr("width", 600)
+              .attr("height", 600)
+              .append("g")
+              .attr("transform", `translate(150 ,50)`)
+              ;
+              let radialScale = d3.scaleLinear()
+                .domain([0,10])
+                .range([0,100])
+                let ticks = [2, 4, 6, 8, 10];
+              radarSvg.selectAll("circle")
+              .data(ticks)
+              .join(
+                  enter => enter.append("circle")
+                      .attr("cx", 150 / 2)
+                      .attr("cy", 150 / 2)
+                      .attr("fill", "none")
+                      .attr("stroke", "gray")
+                      .attr("r", d => radialScale(d))
+              );
+              
+              radarSvg.selectAll(".ticklabel")
+              .data(ticks)
+              .join(
+                  enter => enter.append("text")
+                      .attr("class", "ticklabel")
+                      .attr("x", 150 / 2 )
+                      .attr("y", d => 150 / 2 - radialScale(d))
+                      .text(d => d.toString())
+                      .attr("font-size","10px")
+              );
+              function angleToCoordinate(angle : number, value : number){
+                let x = Math.cos(angle) * radialScale(value);
+                let y = Math.sin(angle) * radialScale(value);
+                return {"x": 150 / 2 + x, "y": 150 / 2 - y};
+            }
+            let featureData = featuress.map((f, i) => {
+              let angle = (Math.PI / 2) + (2 * Math.PI * i / featuress.length);
+              return {
+                  "name": f,
+                  "angle": angle,
+                  "line_coord": angleToCoordinate(angle, 10),
+                  "label_coord": angleToCoordinate(angle, 10.5)
+              };
+          });
+          
+          // draw axis line
+          radarSvg.selectAll("line")
+              .data(featureData)
+              .join(
+                  enter => enter.append("line")
+                      .attr("x1", 150 / 2)
+                      .attr("y1", 150 / 2)
+                      .attr("x2", d => d.line_coord.x)
+                      .attr("y2", d => d.line_coord.y)
+                      .attr("stroke","black")
+              );
+          
+          // draw axis label
+          radarSvg.selectAll(".axislabel")
+              .data(featureData)
+              .join(
+                  enter => enter.append("text")
+                      .attr("x", d => d.label_coord.x)
+                      .attr("y", d => d.label_coord.y)
+                      .text(d => d.name)
+              );
+            let line = d3.line<{ x: number, y: number }>()
+                .x(d => d.x)
+                .y(d => d.y);
+                
+            let colors = ["green", "yellow", "skyblue" , "red" , "pink"];
+            let pruebas = ["Base" , "Fun" , "Medi 1" , "TSST" , "Medi 2"];
+            function getPathCoordinates(data_point:any){
+              let coordinates = [];
+              for (var i = 0; i < featuress.length; i++){
+                  let ft_name = featuress[i];
+                  let angle = (Math.PI / 2) + (2 * Math.PI * i / featuress.length);
+                  coordinates.push(angleToCoordinate(angle, data_point[ft_name]));
+              }
+              return coordinates;
+          }
+          console.log(cuestionarios);
+          let data = [];
+          let Datas  = [];
+          for (const key in cuestionarios.Cuestionarios) {
+            if (Object.prototype.hasOwnProperty.call(cuestionarios.Cuestionarios, key)) {
+              const cuestionario = cuestionarios.Cuestionarios[key as keyof typeof cuestionarios.Cuestionarios];
+              let formattedPoint: any = {};
+          
+              featuress.forEach(f => {
+                const value = cuestionario[f as keyof typeof cuestionario];
+                const numPoints = value !== null ? Math.round(value) : 0;  // Convert to number of points (0 if null)
+                formattedPoint[f] =numPoints;  // Convert number to points
+              });
+          
+              Datas.push( formattedPoint );
+            }
+          }
+          
+          //generate the data
+          for (var i = 0; i < 3; i++){
+              let point : any = {};
+              //each feature will be a random number from 1-9
+              featuress.forEach(f => point[f] = 1 + Math.random() * 8);
+              data.push(point);
+          }
+          console.log(Datas);
+          radarSvg.selectAll("path")
+            .data(Datas)
+            .join(
+                enter => enter.append("path")
+                  .datum(d => getPathCoordinates(d))
+                  .attr("d" , line)
+                  .attr("stroke-width", 3)
+                  
+                  .attr("fill", (_, i) => colors[i])
+                  
+                  .attr("opacity", 0.5)
+                  .attr("id",(_, i) => pruebas[i])
+            );
+         
+        
+            
+        offsetX += 5;
+    
+
+}
+async function plot_chart_segments_detailed(data: SujetoData , questionData : SujetoQuestion , type : any,signal : string) {
   
   const margin_focus = {top: 50, right: 30, bottom: 30, left: 20};
       const width_focus = 800- margin_focus.left - margin_focus.right;
       const height_focus = 150 - margin_focus.top - margin_focus.bottom;
         // Al hacer clic en la línea, actualizar el gráfico secundario
         const selectedData = data.Datos;
-        
+        let intervalosPruebas: IntervalosPruebas[] | undefined;
+        try {
+          intervalosPruebas = await d3.json("assets/intervalos_pruebas1.json");
+         
+      } catch (error) {
+          console.error("Error loading JSON:", error);
+          return;
+      }
+      if (!intervalosPruebas) {
+        console.error("Loaded JSON is undefined or null");
+        return;
+    }
+    console.log(intervalosPruebas)
         const xScaleSelected = d3.scaleTime()
         .domain([d3.min(data.Fecha.map(f => new Date(f))) as Date, d3.max(data.Fecha.map(f => new Date(f))) as Date])
         .range([0, width_focus]); // Ancho del gráfico secundario temporal
@@ -995,18 +1378,7 @@ async function plot_chart_segments(data: SujetoData , questionData : SujetoQuest
       .x((d, i) => xScaleSelected(new Date(data.Fecha[i])))
       .y(d => yScaleSelected(d))
       .curve(d3.curveMonotoneX);
-      let intervalosPruebas: IntervalosPruebas[] | undefined;
-      try {
-        intervalosPruebas = await d3.json("assets/intervalos_pruebas1.json");
-       
-    } catch (error) {
-        console.error("Error loading JSON:", error);
-        return;
-    }
-    if (!intervalosPruebas) {
-      console.error("Loaded JSON is undefined or null");
-      return;
-  }
+     
   let newGridTile = d3.select(".eda-grid-tile .scrollable-container");
   if(type ==1){
     d3.selectAll(".temp-grid-tile .scrollable-container svg").remove();
@@ -1229,141 +1601,4 @@ intervalosPruebas.forEach((d:IntervalosPruebas) => {
             }
         });
     });
-}
-function plot_radar(cuestionarios: SujetoQuestion){
-  let offsetX = 5;
-  
-  
-
-    const featuress = ['PANAS', 'STAI', 'DIM', 'SSSQ'];  // Define the features
-
-             
-              d3.select(".radar-grid-tile .scrollable-container").selectAll("*").remove();
-              const radarSvg = d3.select(".radar-grid-tile .scrollable-container").append("svg")
-              .attr("width", 600)
-              .attr("height", 600)
-              .append("g")
-              .attr("transform", `translate(150 ,50)`)
-              ;
-              let radialScale = d3.scaleLinear()
-                .domain([0,10])
-                .range([0,100])
-                let ticks = [2, 4, 6, 8, 10];
-              radarSvg.selectAll("circle")
-              .data(ticks)
-              .join(
-                  enter => enter.append("circle")
-                      .attr("cx", 150 / 2)
-                      .attr("cy", 150 / 2)
-                      .attr("fill", "none")
-                      .attr("stroke", "gray")
-                      .attr("r", d => radialScale(d))
-              );
-              
-              radarSvg.selectAll(".ticklabel")
-              .data(ticks)
-              .join(
-                  enter => enter.append("text")
-                      .attr("class", "ticklabel")
-                      .attr("x", 150 / 2 )
-                      .attr("y", d => 150 / 2 - radialScale(d))
-                      .text(d => d.toString())
-                      .attr("font-size","10px")
-              );
-              function angleToCoordinate(angle : number, value : number){
-                let x = Math.cos(angle) * radialScale(value);
-                let y = Math.sin(angle) * radialScale(value);
-                return {"x": 150 / 2 + x, "y": 150 / 2 - y};
-            }
-            let featureData = featuress.map((f, i) => {
-              let angle = (Math.PI / 2) + (2 * Math.PI * i / featuress.length);
-              return {
-                  "name": f,
-                  "angle": angle,
-                  "line_coord": angleToCoordinate(angle, 10),
-                  "label_coord": angleToCoordinate(angle, 10.5)
-              };
-          });
-          
-          // draw axis line
-          radarSvg.selectAll("line")
-              .data(featureData)
-              .join(
-                  enter => enter.append("line")
-                      .attr("x1", 150 / 2)
-                      .attr("y1", 150 / 2)
-                      .attr("x2", d => d.line_coord.x)
-                      .attr("y2", d => d.line_coord.y)
-                      .attr("stroke","black")
-              );
-          
-          // draw axis label
-          radarSvg.selectAll(".axislabel")
-              .data(featureData)
-              .join(
-                  enter => enter.append("text")
-                      .attr("x", d => d.label_coord.x)
-                      .attr("y", d => d.label_coord.y)
-                      .text(d => d.name)
-              );
-            let line = d3.line<{ x: number, y: number }>()
-                .x(d => d.x)
-                .y(d => d.y);
-                
-            let colors = ["green", "yellow", "skyblue" , "red" , "pink"];
-            let pruebas = ["Base" , "Fun" , "Medi 1" , "TSST" , "Medi 2"];
-            function getPathCoordinates(data_point:any){
-              let coordinates = [];
-              for (var i = 0; i < featuress.length; i++){
-                  let ft_name = featuress[i];
-                  let angle = (Math.PI / 2) + (2 * Math.PI * i / featuress.length);
-                  coordinates.push(angleToCoordinate(angle, data_point[ft_name]));
-              }
-              return coordinates;
-          }
-          console.log(cuestionarios);
-          let data = [];
-          let Datas  = [];
-          for (const key in cuestionarios.Cuestionarios) {
-            if (Object.prototype.hasOwnProperty.call(cuestionarios.Cuestionarios, key)) {
-              const cuestionario = cuestionarios.Cuestionarios[key as keyof typeof cuestionarios.Cuestionarios];
-              let formattedPoint: any = {};
-          
-              featuress.forEach(f => {
-                const value = cuestionario[f as keyof typeof cuestionario];
-                const numPoints = value !== null ? Math.round(value) : 0;  // Convert to number of points (0 if null)
-                formattedPoint[f] =numPoints;  // Convert number to points
-              });
-          
-              Datas.push( formattedPoint );
-            }
-          }
-          
-          //generate the data
-          for (var i = 0; i < 3; i++){
-              let point : any = {};
-              //each feature will be a random number from 1-9
-              featuress.forEach(f => point[f] = 1 + Math.random() * 8);
-              data.push(point);
-          }
-          console.log(Datas);
-          radarSvg.selectAll("path")
-            .data(Datas)
-            .join(
-                enter => enter.append("path")
-                  .datum(d => getPathCoordinates(d))
-                  .attr("d" , line)
-                  .attr("stroke-width", 3)
-                  
-                  .attr("fill", (_, i) => colors[i])
-                  
-                  .attr("opacity", 0.5)
-                  .attr("id",(_, i) => pruebas[i])
-            );
-         
-        
-            
-        offsetX += 5;
-    
-
 }

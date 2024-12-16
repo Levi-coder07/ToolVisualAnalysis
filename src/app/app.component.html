@@ -33,20 +33,39 @@
             } @empty {
             <li>There are no items.</li>
             }
-          
+            <div class="checkbox-container">
+              <mat-checkbox
+                [checked]="selectedCheckbox === 'eda'"
+                (change)="onCheckboxChange('eda')"
+              >
+                EDA
+              </mat-checkbox>
+              <mat-checkbox
+                [checked]="selectedCheckbox === 'temp'"
+                (change)="onCheckboxChange('temp')"
+              >
+                TEMP
+              </mat-checkbox>
+              <mat-checkbox
+                [checked]="selectedCheckbox === 'bvp'"
+                (change)="onCheckboxChange('bvp')"
+              >
+                BVP
+              </mat-checkbox>
+            </div>
         </div>
       </div>
     </mat-grid-tile>
     <mat-grid-tile [colspan]="2" [rowspan]="2">
       <div class="scrollable-container" >
-        <app-pca-visualization #pcaVisualization  [option]="selectedOption" [prueba]="selectedPrueba" ></app-pca-visualization>
+        <app-pca-visualization #pcaVisualization  [option]="selectedOption" [prueba]="selectedPrueba" [signal]="selectedCheckbox" ></app-pca-visualization>
         
         
       </div>
     </mat-grid-tile>
     <mat-grid-tile [colspan]="2" [rowspan]="2">
       <div class="scrollable-container" >
-        <app-ae-visualization [option]="selectedOption" ></app-ae-visualization>
+        <app-ae-visualization #aeVisualization [option]="selectedOption" [prueba]="selectedPrueba" [signal]="selectedCheckbox"></app-ae-visualization>
         
         
       </div>

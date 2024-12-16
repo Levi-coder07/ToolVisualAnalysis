@@ -10,15 +10,18 @@ import { DynamicHostDirective } from './dynamic-host.directive';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { PcaVisualizationComponent } from './pca-visualization/pca-visualization.component';
-import { MatOptionSelectionChange } from '@angular/material/core';
+import { MatOptionSelectionChange, MatPseudoCheckbox } from '@angular/material/core';
 import { isNgContainer } from '@angular/compiler';
 import { NgModule } from '@angular/core';
 import { NewSparkboxExplorationComponent } from "./new-sparkbox-exploration/new-sparkbox-exploration.component";
 import { AeVisualizationComponent } from './ae-visualization/ae-visualization.component';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatPseudoCheckboxModule } from '@angular/material/core';
+import {MatCheckboxModule} from '@angular/material/checkbox';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, TimeSeriesChartComponent, AeVisualizationComponent,NewSparkboxExplorationComponent, RouterLink, OverviewEdaVisualizationComponent, MatGridListModule, MatSelectModule, HorizonEdaVisualizationComponent, NgFor, DynamicHostDirective, NewSparkboxExplorationComponent, NgIf, PcaVisualizationComponent],
+  imports: [MatCheckboxModule,RouterOutlet, TimeSeriesChartComponent, AeVisualizationComponent,NewSparkboxExplorationComponent, RouterLink, OverviewEdaVisualizationComponent, MatGridListModule, MatSelectModule,HorizonEdaVisualizationComponent, NgFor, DynamicHostDirective, NewSparkboxExplorationComponent, NgIf, PcaVisualizationComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
@@ -44,7 +47,9 @@ export class AppComponent {
     { imgSrc: 'assets/img/visualization1.png', altText: 'Visualization 1', component: OverviewEdaVisualizationComponent },
     { imgSrc: 'assets/img/visualization2.png', altText: 'Visualization 2', component: PcaVisualizationComponent }
   ];
-
+  isEDASelected = false;
+  isTEMPSelected = false;
+  isBVPSelected = false;
   constructor() {}
 
   onInit() {
@@ -54,7 +59,16 @@ export class AppComponent {
     
   }
   
- 
+  selectedCheckbox: string = "eda"; // Track which checkbox is selected
+
+  onCheckboxChange(selected: string): void {
+    // Update the selected checkbox
+    this.selectedCheckbox = selected;
+    console.log(`Selected checkbox: ${this.selectedCheckbox}`);
+    if (this.pcaVisualization) {
+      this.pcaVisualization.onSingalChange(this.selectedCheckbox);
+    } // P
+  }
   goBack() {
     this.showGrid = false; // Go back to the initial component
   }
@@ -81,6 +95,9 @@ export class AppComponent {
     if (this.pcaVisualization) {
       this.pcaVisualization.onButtonClick(this.selectedPrueba);
     } // Pass the clicked "prueba" to the other component
+    if (this.aeVisualization) {
+      this.aeVisualization.onButtonClick(this.selectedPrueba);
+    } 
   }
   onOptionChange(option: string) {
     

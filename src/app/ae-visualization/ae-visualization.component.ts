@@ -9,6 +9,7 @@ import { MatCommonModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
 import { NgModel, NgModelGroup } from '@angular/forms';
 import { single, Subject } from 'rxjs';
+import { sign } from 'crypto';
 interface Cuestionarios {
   PANAS: number | null;
   STAI: number | null;
@@ -66,6 +67,7 @@ interface pca_data {
 export class AeVisualizationComponent {
   @Input() option! : string;
   @Input() signal!: string;
+  @Input() prueba!: string;
   senial: string= this.signal;
   selectedClusterCount: number = 2; // Default cluster count
   selectedMetricType: string = 'dtw'; // Default metric type
@@ -81,11 +83,13 @@ export class AeVisualizationComponent {
   private edadata: SujetoData[] = [] ;
   private pca_data : pca_data[] = [];
   public title : string = "Scatter Plot - Overview";
-  names_pca: string[] = ["eda_pca","eda_segments_pca","fun_pca_eda", "tsst_pca_eda" ];
+  
+  names_pca: string[] = ["eda_pca","eda_segments_pca","fun_pca_", "tsst_pca_" ];
   names_tsne: string[] = ["eda_tsne","eda_segments_tsne","fun_tsne_eda", "tsst_tsne_eda" ];
-  names_options_cluster: string[] = ["complete","segments","fun", "tsst" ];
+  names_options_cluster: string[] = ["complete","segments","fun", "TSST" ];
   metrics: string[] = ["dtw" ,"softdtw" ];
   names: any;
+  private name_compose! : string ;
   public colorVector : string[] = [];
   private clusters: ClusterInfo[] = [];
   constructor(private renderer: Renderer2 , private DataService : DataService) {
@@ -102,17 +106,20 @@ export class AeVisualizationComponent {
     }
     this.valor = index;
     this.title = `Scatter Plot - ${this.names[index]}`;
-    this.pointPlot(this.data, this.names[index]);
+    this.pointPlot(this.data, this.names[index],this.prueba,this.signal);
   }
-  onButtonClick(index: number): void {
-    if(this.option == 'pca'){
-      this.names = this.names_pca;
-    }else{
-      this.names = this.names_tsne;
+  onButtonClick(test: string): void {
+    let selectedNames = this.option === 'pca' ? this.names_pca : this.names_tsne;
+    this.prueba = test;
+    // Busca el nombre correspondiente al test en el array
+    let selectedName = selectedNames.find(name => name.toLowerCase().includes(test.toLowerCase()));
+    console.log("TESTSELECTED",selectedName)
+    if (!selectedName) {
+      console.error(`Test "${test}" no encontrado en el array.`);
+      return;
     }
-    this.valor = index;
-    this.title = `Scatter Plot - ${this.names[index]}`;
-    this.pointPlot(this.data, this.names[index]);
+    this.title = `Scatter Plot - ${this.signal}-${this.prueba}`;
+    this.pointPlot(this.data, selectedName,this.prueba,this.signal);
   }
   private handleZoom(e : any): void {
     
@@ -120,28 +127,19 @@ export class AeVisualizationComponent {
     
     .attr('transform', e.transform);
   }
-  onClusterCountChange(count: number): void {
+  onSingalChange(signal: string): void {
     if(this.option == 'pca'){
       this.names = this.names_pca;
     }else{
       this.names = this.names_tsne;
     }
-    this.selectedClusterCount = count;
-    this.pointPlot(this.data,this.names[this.valor]);
+    this.signal = signal;
+    this.pointPlot(this.data,this.names[this.valor],this.prueba,this.signal);
   }
 
-  onMetricTypeChange(type: string): void {
-    if(this.option == 'pca'){
-      this.names = this.names_pca;
-    }else{
-      this.names = this.names_tsne;
-    }
-    this.selectedMetricType = type;
-    this.pointPlot(this.data,this.names[this.valor]);
-  }
-  
-  private pointPlot(data : SujetoData[],name: string){
+  private pointPlot(data : SujetoData[],name: string,test:string,signal:string){
     let edadata1 : SujetoData[];
+    let bvpdata : SujetoData[];
     let colorPoint :string;
     this.DataService.loadDataEDA();  
     this.DataService.edaData$.subscribe(data1 => {
@@ -149,7 +147,10 @@ export class AeVisualizationComponent {
       // Aquí puedes usar this.data en tu componente
   
     });
-     
+    this.DataService.loadDataBVP();
+    this.DataService.bvpData$.subscribe(data2 => {
+      bvpdata = data2;
+    });
     const svgSelection = d3.selectAll(`#chart-autoencoder svg`);
 
   if (!svgSelection.empty()) {
@@ -162,7 +163,7 @@ export class AeVisualizationComponent {
     
     .attr("transform", `translate(${this.margin.left},${this.margin.top})`);
    
-    d3.json<pca_data[]>(`assets/${name}.json`).then((pca_tsst) => {
+    d3.json<pca_data[]>(`assets/autoencoder_${name}${signal}.json`).then((pca_tsst) => {
 
       if (pca_tsst === undefined) {
         console.error("No data loaded.");
@@ -346,6 +347,7 @@ export class AeVisualizationComponent {
         colorV.push(color)
             plot_chart_segments(data[index2],questiondata[index2],1 ,"EDA");
             plot_chart_segments(edadata1[index2],questiondata[index2],2 ,"TEMP");
+            plot_chart_segments(bvpdata[index2], questiondata[index2], 3, "BVP");
             plot_segments(edadata1[index2],questiondata[index2],colorV)
            
             console.log(colorPoint)
@@ -403,7 +405,7 @@ export class AeVisualizationComponent {
       
      let name:string = "autoencoder_tsst_pca_eda" ;
     
-      this.pointPlot(values, name);
+      this.pointPlot(values, name,this.prueba,this.signal);
      
     
            
@@ -959,266 +961,205 @@ const xScaleSelectedNew = d3.scaleTime()
     
 }
 
+let EdaminDatos: number[] = [];
+let EdamaxDatos: number[] = [];
+let TempminDatos: number[] = [];
+let TempmaxDatos: number[] = [];
+let BvpminDatos: number[] = [];
+let BvpmaxDatos: number[] = [];
+let EdaData: number[][] = [];
+let TemppData: number[][] = [];
+let BvpData: number[][] = [];
 async function plot_chart_segments(data: SujetoData , questionData : SujetoQuestion , type : any,signal : string) {
   
   const margin_focus = {top: 50, right: 30, bottom: 30, left: 20};
-      const width_focus = 800- margin_focus.left - margin_focus.right;
-      const height_focus = 150 - margin_focus.top - margin_focus.bottom;
+      const width_focus = 800- margin_focus.left ;
+      const height_focus = 130 - margin_focus.top;
         // Al hacer clic en la línea, actualizar el gráfico secundario
         const selectedData = data.Datos;
-        
-        const xScaleSelected = d3.scaleTime()
-        .domain([d3.min(data.Fecha.map(f => new Date(f))) as Date, d3.max(data.Fecha.map(f => new Date(f))) as Date])
-        .range([0, width_focus]); // Ancho del gráfico secundario temporal
-    
-      // Escala Y para el gráfico secundario temporal
-      const yScaleSelected = d3.scaleLinear()
-        .domain([d3.min(data.Datos)!, d3.max(data.Datos)!]) // Ajusta el dominio según tus datos
-        .range([height_focus, 0]); // Alto del gráfico secundario temporal
-    
-      // Generador de línea para el gráfico secundario temporal
-     
-        
-
-      // Crear contenedor SVG para el gráfico secundario temporal
-      
-      const lineSelected = d3.line<number>()
-      .x((d, i) => xScaleSelected(new Date(data.Fecha[i])))
-      .y(d => yScaleSelected(d))
-      .curve(d3.curveMonotoneX);
-      let intervalosPruebas: IntervalosPruebas[] | undefined;
-      try {
-        intervalosPruebas = await d3.json("assets/intervalos_pruebas1.json");
-       
-    } catch (error) {
-        console.error("Error loading JSON:", error);
+        let intervalosPruebas: IntervalosPruebas[] | undefined;
+        try {
+          intervalosPruebas = await d3.json("assets/intervalos_pruebas1.json");
+         
+      } catch (error) {
+          console.error("Error loading JSON:", error);
+          return;
+      }
+      if (!intervalosPruebas) {
+        console.error("Loaded JSON is undefined or null");
         return;
     }
-    if (!intervalosPruebas) {
+    let datosFiltrados: number[];
+    let totalData: any[] = []; 
+   
+    const segmento = intervalosPruebas.find(
+      (seg) => Array.isArray(seg.Subject) && seg.Subject.includes(data.Sujeto)
+    );
+   
+    if (!segmento) {
       console.error("Loaded JSON is undefined or null");
       return;
   }
-  let newGridTile = d3.select(".eda-grid-tile .scrollable-container");
-  if(type ==1){
-    d3.selectAll(".temp-grid-tile .scrollable-container svg").remove();
-    newGridTile = d3.select(".temp-grid-tile .scrollable-container");
-  }else if (type==2){
-    d3.selectAll(".eda-grid-tile .scrollable-container svg").remove();
-    newGridTile = d3.select(".eda-grid-tile .scrollable-container");
-  }else{
+    const pruebaName = "TSST";
+const prueba = segmento.Pruebas.find((p) => p.Prueba === pruebaName);
 
-  }
- 
- 
-    
-intervalosPruebas.forEach((d:IntervalosPruebas) => {
-            console.log("Aqui ",d.Pruebas);
-
+// Verificar si la prueba fue encontrada
+if (!prueba) {
+  console.error("Loaded JSON is undefined or null");
+      return;
+} 
+      datosFiltrados = data.Datos.filter((d, i) => {
+        const fecha = new Date(data.Fecha[i]);
+        return fecha >= new Date(prueba.Inicio) && fecha <= new Date(prueba.Fin);
       });
+      
+      totalData.push(datosFiltrados);
+      let fechasFiltradasSolo = data.Fecha.filter((f) => {
+        const fecha = new Date(f);
+        return !isNaN(fecha.getTime()) && fecha >= new Date(prueba.Inicio) && fecha <= new Date(prueba.Fin);
+      }).map((f) => new Date(f));
+      
+      const xScaleSelected = d3.scaleTime()
+      .domain([
+        d3.min(fechasFiltradasSolo) as Date,
+        d3.max(fechasFiltradasSolo) as Date
+      ])
+      .range([0, width_focus]); 
+      
+      // Escala Y para el gráfico secundario temporal
+      const yScaleSelected = d3.scaleLinear()
+        .domain([d3.min(datosFiltrados)!, d3.max(datosFiltrados)!]) // Ajusta el dominio según tus datos
+        .range([height_focus, 0]); // Alto del gráfico secundario temporal
+        let yScaleSelectedNew = d3.scaleLinear()
+        .domain([d3.min(EdaminDatos)!, d3.max(EdamaxDatos)!]) // Ajusta el dominio según tus datos
+        .range([height_focus, 0]);  
+        let lineSelected = d3.line<number>()
+        .x((d, i) => xScaleSelected(new Date(fechasFiltradasSolo[i])))
+        .y(d => yScaleSelectedNew(d))
+        .curve(d3.curveMonotoneX);
+      // Generador de línea para el gráfico secundario temporal
+      let newGridTile = d3.select(".eda-grid-tile .scrollable-container");
+      if(type ==1){
+        EdaData.push(datosFiltrados);
+        EdaminDatos.push(d3.min(datosFiltrados)!);
+          EdamaxDatos.push(d3.max(datosFiltrados)!);
+        newGridTile = d3.select(".eda-grid-tile .scrollable-container");
+        yScaleSelectedNew = d3.scaleLinear()
+            .domain([d3.min(EdaminDatos)!, d3.max(EdamaxDatos)!]) // Ajusta el dominio según tus datos
+            .range([height_focus, 0]);
+            lineSelected = d3.line<number>()
+            .x((d, i) => xScaleSelected(new Date(fechasFiltradasSolo[i])))
+            .y(d => yScaleSelectedNew(d))
+            .curve(d3.curveMonotoneX);
+      }else if (type==2){
+        TemppData.push(datosFiltrados);
+        TempminDatos.push(d3.min(datosFiltrados)!);
+        TempmaxDatos.push(d3.max(datosFiltrados)!);
+        newGridTile = d3.select(".temp-grid-tile .scrollable-container");
+        yScaleSelectedNew = d3.scaleLinear()
+            .domain([d3.min(TempminDatos)!, d3.max(TempmaxDatos)!]) // Ajusta el dominio según tus datos
+            .range([height_focus, 0]);
+            lineSelected = d3.line<number>()
+        .x((d, i) => xScaleSelected(new Date(fechasFiltradasSolo[i])))
+        .y(d => yScaleSelectedNew(d))
+        .curve(d3.curveMonotoneX);
+      }else{
+        BvpData.push(datosFiltrados);
+        BvpminDatos.push(d3.min(datosFiltrados)!);
+        BvpmaxDatos.push(d3.max(datosFiltrados)!);
+        newGridTile = d3.select(".bvp-grid-tile .scrollable-container");
+        yScaleSelectedNew = d3.scaleLinear()
+            .domain([d3.min(BvpminDatos)!, d3.max(BvpmaxDatos)!]) // Ajusta el dominio según tus datos
+            .range([height_focus, 0]);
+            lineSelected = d3.line<number>()
+        .x((d, i) => xScaleSelected(new Date(fechasFiltradasSolo[i])))
+        .y(d => yScaleSelectedNew(d))
+        .curve(d3.curveMonotoneX);
+      }
+      
+        
 
       // Crear contenedor SVG para el gráfico secundario temporal
-      const overviewSvg = newGridTile.append("svg")
-        .attr("width", width_focus + margin_focus.left + margin_focus.right)
-        .attr("height", height_focus + margin_focus.top + margin_focus.bottom)
-        .append("g")
-        .attr("transform", `translate(${margin_focus.left + 10},${margin_focus.top})`);
+      
+      
+      
+ 
+ 
+    
 
-      // Agregar la línea seleccionada al gráfico secundario temporal
+
+      let overviewSvg = newGridTile.select<SVGGElement>("svg g");
+  if (overviewSvg.empty()) {
+    
+    // Create SVG container if it doesn't exist
+    overviewSvg = newGridTile.append("svg")
+      .attr("width", width_focus + margin_focus.left + margin_focus.right)
+      .attr("height", height_focus + margin_focus.top + margin_focus.bottom)
+      .append("g")
+      .attr("transform", `translate(${margin_focus.left + 10},15)`);
+
+    // Add X and Y axes only the first time
+    overviewSvg.append("g")
+      .attr("transform", `translate(0,${height_focus})`)
+      .call(d3.axisBottom(xScaleSelected));
+
+    overviewSvg.append("g")
+    .attr("class","y-axis")
+      .call(d3.axisLeft(yScaleSelectedNew).ticks(4));
+  } else {
+    
+    // Update the Y-axis with the new scale
+    overviewSvg.select<SVGGElement>(".y-axis")
+      .transition() // Add a smooth transition
+      .duration(500)
+      .call(d3.axisLeft(yScaleSelectedNew).ticks(4));
+  }
+  
+
+  if(type==1){
+    
+    overviewSvg.selectAll( `path`).remove();
+    EdaData.forEach((pathData,index) => {
+      console.log("Times");
       overviewSvg.append("path")
-        .datum(selectedData)
-        .attr("class", "line")
+        .datum(pathData)
+        .attr("class", `line-eda-path line-${type}-${index}`) // Unique class for each path
         .attr("d", lineSelected)
-        .style("stroke", "red")
-        .style("stroke-width", 2)
-        .style("fill", "none")
-        .style("color", "blue")
-        ;
-       overviewSvg.append("text")
-        .attr("x", (width_focus / 2))
-        .attr("y", 0 - (margin_focus.top / 2))
-        .attr("text-anchor", "middle")
-        .style("font-size", "15px")
-        .style("text-decoration", "underline")
-        .text(`Sujeto: ${data.Sujeto} ${signal}`);
-
-        overviewSvg.append("g")
-        .attr("transform", `translate(0,${height_focus})`)
-        .call(d3.axisBottom(xScaleSelected))
-        ;
-        if (!questionData) {
-                console.error("Loaded JSON is undefined or null");
-                return;
-            }
-        overviewSvg.append("g")
-        .call(d3.axisLeft(yScaleSelected).ticks(4));
-      
-        intervalosPruebas.forEach((d: IntervalosPruebas) => {
-          d.Pruebas.forEach((prueba: IntervaloPrueba) => {
-              const inicio = new Date(prueba.Inicio);
-              const fin = new Date(prueba.Fin);
-      
-              // Filtrar datos que estén dentro del intervalo de tiempo de esta prueba
-              const datosFiltrados = data.Fecha.filter((fecha, idx) => {
-                  const date = new Date(fecha);
-                  return date >= inicio && date <= fin;
-              });
-              
-              if (questionData && questionData.Cuestionarios) {
-                const pruebaData = questionData.Cuestionarios[prueba.Prueba as keyof CuestionariosBase];
-
-                  if (!pruebaData) {
-                      console.warn(`No data found for prueba: ${prueba.Prueba}`);
-                      return;
-                  }
-      
-                  const cuestionarios = pruebaData;
-                  const colores = {
-                      SSSQ: "rgba(0, 0, 255, 0.6)",
-                      PANAS: "rgba(0, 255, 0, .9)",
-                      STAI: "rgba(255, 255, 0, 0.6)",
-                      DIM: "rgba(0, 255, 255, 0.6)"
-                  };
-                  let offsetX = 0;
-                  
-                  Object.keys(cuestionarios).forEach((key) => {
-                      const cuestionario = key as keyof Cuestionarios; // Type assertion
-                      const featuress = ['PANAS', 'STAI', 'DIM', 'SSSQ'];  // Define the features
-                      const probas = ["Base" , "Fun" , "Medi 1" , "TSST" , "Medi 2"];
-                      if ((cuestionarios?.[cuestionario] ?? 0) > 0 ) {
-                          overviewSvg.append("rect")
-                              .attr("x", xScaleSelected(new Date(prueba.Fin)) + offsetX)
-                              .attr("y", 0)
-                              .attr("width", 10)
-                              .attr("height", height_focus)
-                              .attr("fill", colores[cuestionario])
-                              .attr("id",cuestionario)
-                              .on("mouseover", (event, d) => {
-                                  const tooltip = d3.select("#tooltip");
-                                  tooltip.transition().duration(200).style("opacity", .9);
-                                  tooltip.html(`<div><strong>${cuestionario}:</strong> ${cuestionarios[cuestionario]?.toPrecision(2)}</div>`)
-                                      .style("left", (event.pageX + 5) + "px")
-                                      .style("top", (event.pageY - 28) + "px");
-                              })
-                              .on("mouseout", () => {
-                                  d3.select("#tooltip").transition().duration(500).style("opacity", 0);
-                              })
-                              .on("click", function() {
-                                // 'this' refers to the clicked <rect> element
-                               
-                            });
-                              
-                          offsetX += 10;
-                      }
-                  });
-      
-                  
-      
-                  overviewSvg.append("text")
-                      .attr("x", xScaleSelected(new Date(prueba.Inicio)) + 5)
-                      .attr("y", 15)
-                      .text(prueba.Prueba)
-                      .attr("fill", "black")
-                      .attr("font-size", "14px");
-              } else {
-                  console.error('questionData or questionData.Cuestionario is undefined');
-              }
-          });
-      });
-      
-      
-      intervalosPruebas.forEach((d: IntervalosPruebas) => {
-       
-        
-        d.Pruebas.forEach((prueba: IntervaloPrueba) => {
-            const inicio = new Date(prueba.Inicio);
-            const fin = new Date(prueba.Fin);
-            
-            // Filtrar datos que estén dentro del intervalo de tiempo de esta prueba
-            const datosFiltrados = data.Fecha.filter((fecha, idx) => {
-                const date = new Date(fecha);
-                return date >= inicio && date <= fin;
-            });
-            
-            if (questionData && questionData.Cuestionarios) {
-              const pruebaData = questionData.Cuestionarios[prueba.Prueba as keyof CuestionariosBase];
-              const probaas = questionData.Cuestionarios;
-              
-                if (!pruebaData) {
-                    console.warn(`No data found for prueba: ${prueba.Prueba}`);
-                    return;
-                }
-    
-                const cuestionarios = pruebaData;
-                const colores = {
-                    SSSQ: "rgba(0, 0, 255, 0.6)",
-                    PANAS: "rgba(0, 255, 0, .9)",
-                    STAI: "rgba(255, 255, 0, 0.6)",
-                    DIM: "rgba(0, 255, 255, 0.6)"
-                };
-                let offsetX = 5;
-                let pruebas = ["Base" , "Fun" , "Medi 1" , "TSST" , "Medi 2"];
-                let colors = [
-                  "rgba(0, 255, 0, 1)",       // Bright Green
-                  "rgba(255, 255, 0, 1)",     // Bright Yellow
-                  "rgba(0, 191, 255, 1)",     // Deep Sky Blue
-                  "rgba(255, 0, 0, 1)",       // Bright Red
-                  "rgba(255, 105, 180, 1)"    // Hot Pink
-              ];
-              
-                overviewSvg.append("rect")
-                      .attr("x", xScaleSelected(new Date(prueba.Inicio)))
-                      .attr("y", 0)
-                      .attr("width", xScaleSelected(new Date(prueba.Fin)) - xScaleSelected(new Date(prueba.Inicio)))
-                      .attr("height", height_focus)
-                      .attr("class" , "Test")
-                      .attr("id",prueba.Prueba)
-                      .attr("fill", "rgba(0, 150, 255, 0.2)")
-                      .on("click", function()  {
-                        const pruebaPrueba = prueba.Prueba;
-                        const index = pruebas.findIndex(prueba => prueba === pruebaPrueba);
-                        console.log(`path #${prueba.Prueba}`)
-                        const radar = d3.select(`.radar-grid-tile .scrollable-container`);
-                        radar.selectAll("path")
-                        .transition()
-                        .duration(500) // Duration of the transition in milliseconds
-                        .attr("opacity", 0.05);
-                        d3.selectAll(`rect.Test`).transition().duration(500).attr("fill","rgba(0, 150, 255, 0.2)");
-                        d3.selectAll(`rect[id^="${prueba.Prueba}"]`).transition().duration(500).attr("fill",colors[index]);
-                    // Transition to highlight the selected path
-                    radar.selectAll(`path[id^="${prueba.Prueba}"]`)
-                        .transition()
-                        .duration(500) // Duration of the transition in milliseconds
-                        .attr("opacity", .8)
-        .attr("stroke",colors[index]) // Black border
-        .attr("stroke-width", 1.5); // Border width // Highlighting the selected path
-                        
-                      })
-                      .on("dblclick", function() {
-                        // Perform actions on double-click
-                        console.log("Double-clicked on:", d);
-                        d3.selectAll(`rect.Test`).transition().duration(500).attr("fill","rgba(0, 150, 255, 0.2)");
-                        // Example: Change the fill color of the double-clicked path
-                      
-                            const radar = d3.select(`.radar-grid-tile .scrollable-container`);
-                            radar.selectAll(`path`)
-                            .transition()
-                            .duration(500) // Duration of the transition in milliseconds
-                            .attr("opacity", 0.6); // Highlighting the selected path
-                      })
-                      
-                      ;
-    
-                overviewSvg.append("text")
-                    .attr("x", xScaleSelected(new Date(prueba.Inicio)) + 5)
-                    .attr("y", 15)
-                    .text(prueba.Prueba)
-                    .attr("fill", "black")
-                    .attr("font-size", "14px");
-            } else {
-                console.error('questionData or questionData.Cuestionario is undefined');
-            }
-        });
+        .style("stroke", "red") // Customize stroke color
+        .style("stroke-width", 1)
+        .style("fill", "none");
     });
+  }
+  
+  else if(type ==2){
+    overviewSvg.selectAll( `path`).remove();
+    console.log("lenghtTemp",TemppData.length); 
+  TemppData.forEach((pathData,index) => {
+    overviewSvg.append("path")
+      .datum(pathData)
+      .attr("class", `line-path line-${type}-${index}`) // Unique class for each path
+      .attr("d", lineSelected)
+      .style("stroke", "blue") // Customize stroke color
+      .style("stroke-width", 1)
+      .style("fill", "none");
+  });
+  }else{
+    overviewSvg.selectAll( `path`).remove();
+    console.log("lenghtTemp",TemppData.length);
+  BvpData.forEach((pathData,index) => {
+    overviewSvg.append("path")
+      .datum(pathData)
+      .attr("class", `line-path line-${type}-${index}`) // Unique class for each path
+      .attr("d", lineSelected)
+      .style("stroke", "black") // Customize stroke color
+      .style("stroke-width", 1)
+      .style("fill", "none");
+  });
+  }
+ 
+  
+      
+
 }
 function plot_radar(cuestionarios: SujetoQuestion){
   let offsetX = 5;
