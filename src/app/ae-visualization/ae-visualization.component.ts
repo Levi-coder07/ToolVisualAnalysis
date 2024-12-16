@@ -76,13 +76,14 @@ export class AeVisualizationComponent {
   type = 0;
   globalMaxY = 0;
   private platformId: object;
+  private nameSignal:string = "tsst_pca_"
   private  margin = {top: 10, right: 0, bottom: 10, left: 20};
   private width = 450 - this.margin.left - this.margin.right;
   private height = 140 - this.margin.top - this.margin.bottom;
   private data: SujetoData[] = [] ;
   private edadata: SujetoData[] = [] ;
   private pca_data : pca_data[] = [];
-  public title : string = "Scatter Plot - Overview";
+  public title : string = "Autoencoder ";
   
   names_pca: string[] = ["eda_pca","eda_segments_pca","fun_pca_", "tsst_pca_" ];
   names_tsne: string[] = ["eda_tsne","eda_segments_tsne","fun_tsne_eda", "tsst_tsne_eda" ];
@@ -105,7 +106,7 @@ export class AeVisualizationComponent {
       this.names = this.names_tsne;
     }
     this.valor = index;
-    this.title = `Scatter Plot - ${this.names[index]}`;
+    this.title = `Autoencoder - ${this.names[index]}`;
     this.pointPlot(this.data, this.names[index],this.prueba,this.signal);
   }
   onButtonClick(test: string): void {
@@ -118,7 +119,8 @@ export class AeVisualizationComponent {
       console.error(`Test "${test}" no encontrado en el array.`);
       return;
     }
-    this.title = `Scatter Plot - ${this.signal}-${this.prueba}`;
+    this.nameSignal = selectedName;
+    this.title = `Autoencoder - ${this.signal}-${this.prueba}`;
     this.pointPlot(this.data, selectedName,this.prueba,this.signal);
   }
   private handleZoom(e : any): void {
@@ -134,7 +136,8 @@ export class AeVisualizationComponent {
       this.names = this.names_tsne;
     }
     this.signal = signal;
-    this.pointPlot(this.data,this.names[this.valor],this.prueba,this.signal);
+    console.log("AE")
+    this.pointPlot(this.data,this.nameSignal ,this.prueba,this.signal);
   }
 
   private pointPlot(data : SujetoData[],name: string,test:string,signal:string){
@@ -258,6 +261,23 @@ export class AeVisualizationComponent {
       .range(d3.schemeCategory10);    
       const defaultColor = "#CCCCCC";
       const colorV = this.colorVector;
+      const tooltip2 = d3.select("body").append("div")
+      .attr("id",2)
+    .style("position", "absolute")
+    .style("background", "#f9f9f9")
+    .style("border", "1px solid #ccc")
+    .style("padding", "5px 10px")
+    .style("border-radius", "5px")
+    .style("pointer-events", "none")
+    .style("opacity", 0); 
+    const tooltip3 = d3.select("body").append("div")
+    .style("position", "absolute")
+    .style("background", "#f9f9f9")
+    .style("border", "1px solid #ccc")
+    .style("padding", "5px 10px")
+    .style("border-radius", "5px")
+    .style("pointer-events", "none")
+    .style("opacity", 0); 
       const getColor = (sujeto : string, b :ClusterData, colorScale : any) => {
         const keyIndex = Object.keys(b).findIndex(key => b[key].includes(sujeto));
         console.log('keyIndex', keyIndex);
@@ -271,54 +291,47 @@ export class AeVisualizationComponent {
       .attr("cx", function (d) { return xLine(d.Point[0]); } )
       .attr("cy", function (d) { return yLine(d.Point[1]); } )
       .attr("r", 4)
-      .attr("id", (_, i) => `${sujetos[i]}-${getColor(sujetos[i], b, colorScale)}`)
+      .attr("id", (_, i) => `${sujetos[i]}`)
       .style("fill", (_, i) => getColor(sujetos[i], b, colorScale))
           .attr("fill", "none")
           .on("mouseover", async function(event, d) {
             const clickedId = d3.select(this).attr('id');
             console.log('Clicked ID:', clickedId);
+            const [user, color] = this.id.split('-');
             index = data.findIndex(d => d.Sujeto === clickedId);
             index2 =  sujetos1.findIndex(d => d === clickedId);
-            const tooltip = d3.select("#tooltip");
-            tooltip.transition().duration(200).style("opacity", .9);
+            tooltip2.style("opacity", 1);
+            d3.select(`.pca-grid-tile .scrollable-container svg g #${user}`)
+            .style("r",7)
+            .style("fill","gray")
+            .style("opacity", 1); 
             
-               
 
-                 
-                  tooltip.html("<div id='smallChart'></div>")
-                    .style("left", (event.pageX + 5) + "px")
-                    .style("top", (event.pageY - 28) + "px");
-    
-                    const smallWidth = 180, smallHeight = 100;
-
-                    const smallSvg = d3.select("#smallChart").append("svg")
-                      .attr("width", smallWidth)
-                      .attr("height", smallHeight);
-                
-                    const smallX = d3.scaleLinear().range([0, smallWidth]);
-                    const smallY = d3.scaleLinear().range([smallHeight, 0]);
-                
-                    smallX.domain([0, data[index].Datos.length - 1]);
-                    smallY.domain([0, d3.max(data[index].Datos) as number]);
-                
-                    const smallLine = d3.line<number>()
-                      .x((d, i) => smallX(i))
-                      .y(d => smallY(d));
-                
-                    smallSvg.append("path")
-                      .datum(data[index].Datos)
-                      .attr("class", "line")
-                      .attr("d", smallLine)
-                      .attr("stroke", "red")
-                      .attr("stroke-width", 1.5)
-                      .attr("fill", "none")
-                      .text(`Sujeto ${d['Sujeto']}`);
                 })
-                .on("mouseout", () => {
+                .on("mouseout", function(event) {
                   const tooltip = d3.select("#tooltip");
+                  const clickedId = d3.select(this).attr('id');
+                  const [user, color] = this.id.split('-');
                   tooltip.transition().duration(500).style("opacity", 0);
                   tooltip.html("");
+                  tooltip2.style("opacity", 0);
+                  d3.select(`.pca-grid-tile .scrollable-container svg g #${user}`)
+                  .style("r",4)
+                  .style("fill",(_, i) => getColor(sujetos[i], b, colorScale))
+                  .style("opacity", 1); 
                 })
+                .on("mousemove",function(event){
+                  const clickedId = d3.select(this).attr('id');
+                  const [user, color] = this.id.split('-');
+            console.log('Clicked ID:', clickedId);
+            index = data.findIndex(d => d.Sujeto === clickedId);
+            index2 =  sujetos1.findIndex(d => d === clickedId);
+                  tooltip2.html(`Usuario: BVP ${user}`)
+            .style("left", `${event.pageX + 10}px`)
+            .style("top", `${event.pageY - 20}px`);
+           
+                })
+                
           .on('click', async function(event, d) {
             const clickedId = d3.select(this).attr('id');
             const [user, color] = this.id.split('-'); // Split by delimiter
@@ -343,14 +356,27 @@ export class AeVisualizationComponent {
         const usuarioElegido = 'S1';
         console.log(index2);
         console.log(questiondata[index2]); 
-        plot_radar( questiondata[index2] );
+        if (test === "Medi 1") {
+          plot_radar(questiondata[index2].Cuestionarios["Medi 1"],data[index2].Sujeto);
+        } else if (test === "TSST") {
+          plot_radar(questiondata[index2].Cuestionarios["TSST"],data[index2].Sujeto);
+        } else if (test === "Medi 2") {
+          plot_radar(questiondata[index2].Cuestionarios["Medi 2"],data[index2].Sujeto);
+        } else if (test === "Fun") {
+          plot_radar(questiondata[index2].Cuestionarios["Fun"],data[index2].Sujeto);
+        } else if (test === "Base") {
+          plot_radar(questiondata[index2].Cuestionarios["Base"],data[index2].Sujeto);
+        } else {
+          console.error("Invalid test value:", test);
+        }
+        
         colorV.push(color)
-            plot_chart_segments(data[index2],questiondata[index2],1 ,"EDA");
-            plot_chart_segments(edadata1[index2],questiondata[index2],2 ,"TEMP");
-            plot_chart_segments(bvpdata[index2], questiondata[index2], 3, "BVP");
+            plot_chart_segments(edadata1[index2],questiondata[index2],1 ,"EDA",test);
+            plot_chart_segments(data[index2],questiondata[index2],2 ,"TEMP",test);
+            plot_chart_segments(bvpdata[index2],questiondata[index2],3 ,"BVP",test);
             plot_segments(edadata1[index2],questiondata[index2],colorV)
            
-            console.log(colorPoint)
+           
           });
           let gridDot = d3.selectAll('svg g dot');
           
@@ -970,11 +996,12 @@ let BvpmaxDatos: number[] = [];
 let EdaData: number[][] = [];
 let TemppData: number[][] = [];
 let BvpData: number[][] = [];
-async function plot_chart_segments(data: SujetoData , questionData : SujetoQuestion , type : any,signal : string) {
+let SujetosGlobal:string[]=[];
+async function plot_chart_segments(data: SujetoData , questionData : SujetoQuestion , type : any,signal : string,test:string) {
   
-  const margin_focus = {top: 50, right: 30, bottom: 30, left: 20};
+  const margin_focus = {top: 30, right: 30, bottom: 30, left: 20};
       const width_focus = 800- margin_focus.left ;
-      const height_focus = 130 - margin_focus.top;
+      const height_focus = 120 - margin_focus.top;
         // Al hacer clic en la línea, actualizar el gráfico secundario
         const selectedData = data.Datos;
         let intervalosPruebas: IntervalosPruebas[] | undefined;
@@ -1000,9 +1027,10 @@ async function plot_chart_segments(data: SujetoData , questionData : SujetoQuest
       console.error("Loaded JSON is undefined or null");
       return;
   }
-    const pruebaName = "TSST";
+    const pruebaName = test;
 const prueba = segmento.Pruebas.find((p) => p.Prueba === pruebaName);
 
+console.log("Sujetos", SujetosGlobal)
 // Verificar si la prueba fue encontrada
 if (!prueba) {
   console.error("Loaded JSON is undefined or null");
@@ -1031,7 +1059,7 @@ if (!prueba) {
         .domain([d3.min(datosFiltrados)!, d3.max(datosFiltrados)!]) // Ajusta el dominio según tus datos
         .range([height_focus, 0]); // Alto del gráfico secundario temporal
         let yScaleSelectedNew = d3.scaleLinear()
-        .domain([d3.min(EdaminDatos)!, d3.max(EdamaxDatos)!]) // Ajusta el dominio según tus datos
+        .domain([d3.min(datosFiltrados)!, d3.max(datosFiltrados)!]) // Ajusta el dominio según tus datos
         .range([height_focus, 0]);  
         let lineSelected = d3.line<number>()
         .x((d, i) => xScaleSelected(new Date(fechasFiltradasSolo[i])))
@@ -1040,6 +1068,7 @@ if (!prueba) {
       // Generador de línea para el gráfico secundario temporal
       let newGridTile = d3.select(".eda-grid-tile .scrollable-container");
       if(type ==1){
+        SujetosGlobal.push(data.Sujeto)
         EdaData.push(datosFiltrados);
         EdaminDatos.push(d3.min(datosFiltrados)!);
           EdamaxDatos.push(d3.max(datosFiltrados)!);
@@ -1076,30 +1105,26 @@ if (!prueba) {
         .y(d => yScaleSelectedNew(d))
         .curve(d3.curveMonotoneX);
       }
-      
-        
-
-      // Crear contenedor SVG para el gráfico secundario temporal
-      
-      
-      
- 
- 
-    
-
-
+      let zoom = d3.zoom()
+     
+        .scaleExtent([1, 3])
+        .translateExtent([[10, 0], [width_focus, height_focus]]) // Set zoom scale range
+        .on("zoom", zoomed) as any;
       let overviewSvg = newGridTile.select<SVGGElement>("svg g");
+      
   if (overviewSvg.empty()) {
     
     // Create SVG container if it doesn't exist
     overviewSvg = newGridTile.append("svg")
-      .attr("width", width_focus + margin_focus.left + margin_focus.right)
-      .attr("height", height_focus + margin_focus.top + margin_focus.bottom)
-      .append("g")
-      .attr("transform", `translate(${margin_focus.left + 10},15)`);
+            .attr("width", width_focus  )
+            .attr("height", height_focus + 20 )
+            .call(zoom)
+            .append("g")
+            .attr("transform", `translate(30,0)`);
 
     // Add X and Y axes only the first time
     overviewSvg.append("g")
+    .attr("class","x-axis")
       .attr("transform", `translate(0,${height_focus})`)
       .call(d3.axisBottom(xScaleSelected));
 
@@ -1114,7 +1139,14 @@ if (!prueba) {
       .duration(500)
       .call(d3.axisLeft(yScaleSelectedNew).ticks(4));
   }
-  
+  const tooltip = d3.select("body").append("div")
+    .style("position", "absolute")
+    .style("background", "#f9f9f9")
+    .style("border", "1px solid #ccc")
+    .style("padding", "5px 10px")
+    .style("border-radius", "5px")
+    .style("pointer-events", "none")
+    .style("opacity", 0); 
 
   if(type==1){
     
@@ -1123,13 +1155,65 @@ if (!prueba) {
       console.log("Times");
       overviewSvg.append("path")
         .datum(pathData)
-        .attr("class", `line-eda-path line-${type}-${index}`) // Unique class for each path
+        .attr("class", `line-eda-path-${type}`) // Unique class for each path
         .attr("d", lineSelected)
         .style("stroke", "red") // Customize stroke color
-        .style("stroke-width", 1)
-        .style("fill", "none");
-    });
-  }
+        .style("stroke-width", 1.5)
+        .style("fill", "none")
+        .on("mouseover", function () {
+          // Highlight the hovered line
+          d3.select(this)
+              .style("stroke", "orange") // Highlight color
+              .style("stroke-width", 3); // Thicker line for emphasis
+      
+          // Highlight the specific path in the radar chart
+          d3.selectAll(`.radar-grid-tile .scrollable-container svg g path`)
+                  .style("fill","green")
+                  .style("opacity", 0.05); 
+          d3.select(`.radar-grid-tile .scrollable-container svg g path#${SujetosGlobal[index]}`)
+              // Change fill color for emphasis
+              .style("opacity", 0.8); // Ensure it's fully visible
+      
+          // Lowlight all other lines in the overview chart
+          overviewSvg.selectAll("path")
+              .filter(function () {
+                  return this !== d3.select(this).node(); // Exclude the hovered line
+              })
+              .style("opacity", 0.2); // Dim other lines
+      
+          tooltip.style("opacity", 1); // Show tooltip
+      })
+      .on("mousemove", function (event) {
+          const mouseX = d3.pointer(event)[0]; // Mouse x position in the SVG
+          const date = xScaleSelected.invert(mouseX); // Map x position back to the date using the xScale
+      
+          // Format the date for display
+          const formattedDateTime = d3.timeFormat("%Y-%m-%d %H:%M:%S")(date);
+      
+          // Update tooltip content and position
+          tooltip.html(`Usuario: BVP ${SujetosGlobal[index]}<br>Fecha y Hora: ${formattedDateTime}`)
+              .style("left", `${event.pageX + 10}px`)
+              .style("top", `${event.pageY - 20}px`);
+      })
+      .on("mouseout", function () {
+          // Reset the hovered line's style
+          d3.select(this)
+              .style("stroke", "red") // Default stroke color
+              .style("stroke-width", 1.5); // Default stroke width
+      
+              d3.select(`.radar-grid-tile .scrollable-container svg g path`)
+                  .style("opacity", 0.8); 
+            d3.select(`.radar-grid-tile .scrollable-container svg g path#${SujetosGlobal[index]}`)
+               // Reset to default fill
+              .style("opacity", 0.3); // Reset opacity
+      
+          // Reset the opacity of all lines in the overview chart
+          overviewSvg.selectAll("path")
+              .style("opacity", 1); // Restore original visibility
+      
+          tooltip.style("opacity", 0); // Hide tooltip
+      });;
+    });  }
   
   else if(type ==2){
     overviewSvg.selectAll( `path`).remove();
@@ -1140,161 +1224,310 @@ if (!prueba) {
       .attr("class", `line-path line-${type}-${index}`) // Unique class for each path
       .attr("d", lineSelected)
       .style("stroke", "blue") // Customize stroke color
-      .style("stroke-width", 1)
-      .style("fill", "none");
+      .style("stroke-width", 1.5)
+      .style("fill", "none")
+      .on("mouseover", function () {
+        // Highlight the hovered line
+        d3.select(this)
+            .style("stroke", "orange") // Highlight color
+            .style("stroke-width", 3); // Thicker line for emphasis
+    
+        // Highlight the specific path in the radar chart
+        d3.selectAll(`.radar-grid-tile .scrollable-container svg g path`)
+                .style("fill","green")
+                .style("opacity", 0.05); 
+        d3.select(`.radar-grid-tile .scrollable-container svg g path#${SujetosGlobal[index]}`)
+            // Change fill color for emphasis
+            .style("opacity", 0.8); // Ensure it's fully visible
+    
+        // Lowlight all other lines in the overview chart
+        overviewSvg.selectAll("path")
+            .filter(function () {
+                return this !== d3.select(this).node(); // Exclude the hovered line
+            })
+            .style("opacity", 0.2); // Dim other lines
+    
+        tooltip.style("opacity", 1); // Show tooltip
+    })
+    .on("mousemove", function (event) {
+        const mouseX = d3.pointer(event)[0]; // Mouse x position in the SVG
+        const date = xScaleSelected.invert(mouseX); // Map x position back to the date using the xScale
+    
+        // Format the date for display
+        const formattedDateTime = d3.timeFormat("%Y-%m-%d %H:%M:%S")(date);
+    
+        // Update tooltip content and position
+        tooltip.html(`Usuario: BVP ${SujetosGlobal[index]}<br>Fecha y Hora: ${formattedDateTime}`)
+            .style("left", `${event.pageX + 10}px`)
+            .style("top", `${event.pageY - 20}px`);
+    })
+    .on("mouseout", function () {
+        // Reset the hovered line's style
+        d3.select(this)
+            .style("stroke", "blue") // Default stroke color
+            .style("stroke-width", 1.5); // Default stroke width
+    
+            d3.select(`.radar-grid-tile .scrollable-container svg g path`)
+                .style("opacity", 0.8); 
+          d3.select(`.radar-grid-tile .scrollable-container svg g path#${SujetosGlobal[index]}`)
+             // Reset to default fill
+            .style("opacity", 0.3); // Reset opacity
+    
+        // Reset the opacity of all lines in the overview chart
+        overviewSvg.selectAll("path")
+            .style("opacity", 1); // Restore original visibility
+    
+        tooltip.style("opacity", 0); // Hide tooltip
+    });;
   });
   }else{
     overviewSvg.selectAll( `path`).remove();
+    overviewSvg.selectAll( `tooltip`).remove();
     console.log("lenghtTemp",TemppData.length);
-  BvpData.forEach((pathData,index) => {
-    overviewSvg.append("path")
-      .datum(pathData)
-      .attr("class", `line-path line-${type}-${index}`) // Unique class for each path
-      .attr("d", lineSelected)
-      .style("stroke", "black") // Customize stroke color
-      .style("stroke-width", 1)
-      .style("fill", "none");
+    BvpData.forEach((pathData, index) => {
+      const currentFill = d3.select(`.radar-grid-tile .scrollable-container svg g path#${SujetosGlobal[index]}`)
+            .style("fill")
+      overviewSvg.append("path")
+          .datum(pathData)
+          .attr("class", `line-bvp-path-${type}`) // Unique class for each path
+          .attr("d", lineSelected)
+          .style("stroke", "black") // Default stroke color
+          .style("stroke-width", 1.5) // Default stroke width
+          .style("fill", "none")
+          .on("mouseover", function () {
+            // Highlight the hovered line
+            d3.select(this)
+                .style("stroke", "orange") // Highlight color
+                .style("stroke-width", 3); // Thicker line for emphasis
+        
+            // Highlight the specific path in the radar chart
+            d3.selectAll(`.radar-grid-tile .scrollable-container svg g path`)
+                    .style("fill","green")
+                    .style("opacity", 0.05); 
+            d3.select(`.radar-grid-tile .scrollable-container svg g path#${SujetosGlobal[index]}`)
+                // Change fill color for emphasis
+                .style("opacity", 0.8); // Ensure it's fully visible
+        
+            // Lowlight all other lines in the overview chart
+            overviewSvg.selectAll("path")
+                .filter(function () {
+                    return this !== d3.select(this).node(); // Exclude the hovered line
+                })
+                .style("opacity", 0.2); // Dim other lines
+        
+            tooltip.style("opacity", 1); // Show tooltip
+        })
+        .on("mousemove", function (event) {
+            const mouseX = d3.pointer(event)[0]; // Mouse x position in the SVG
+            const date = xScaleSelected.invert(mouseX); // Map x position back to the date using the xScale
+        
+            // Format the date for display
+            const formattedDateTime = d3.timeFormat("%Y-%m-%d %H:%M:%S")(date);
+        
+            // Update tooltip content and position
+            tooltip.html(`Usuario: BVP ${SujetosGlobal[index]}<br>Fecha y Hora: ${formattedDateTime}`)
+                .style("left", `${event.pageX + 10}px`)
+                .style("top", `${event.pageY - 20}px`);
+        })
+        .on("mouseout", function () {
+            // Reset the hovered line's style
+            d3.select(this)
+                .style("stroke", "black") // Default stroke color
+                .style("stroke-width", 1.5); // Default stroke width
+        
+                d3.select(`.radar-grid-tile .scrollable-container svg g path`)
+                    .style("opacity", 0.8); 
+              d3.select(`.radar-grid-tile .scrollable-container svg g path#${SujetosGlobal[index]}`)
+                 // Reset to default fill
+                .style("opacity", 0.3); // Reset opacity
+        
+            // Reset the opacity of all lines in the overview chart
+            overviewSvg.selectAll("path")
+                .style("opacity", 1); // Restore original visibility
+        
+            tooltip.style("opacity", 0); // Hide tooltip
+        });
   });
   }
  
   
-      
+  function zoomed({ transform }: { transform: ZoomTransform }){
+        
+    const newXScale = transform.rescaleX(xScaleSelected); // Rescale X-axis
+    const newYScale = transform.rescaleY(yScaleSelectedNew); // Rescale Y-axis (optional)
+
+    // Update axes with new scales
+    overviewSvg.select<SVGGElement>(".x-axis")
+        .call(d3.axisBottom(newXScale).ticks(6));
+    overviewSvg.select<SVGGElement>(".y-axis")
+        .call(d3.axisLeft(newYScale).ticks(4));
+
+       lineSelected = d3.line<number>()
+        .x((d, i) => newXScale(new Date(fechasFiltradasSolo[i])))
+        .y(d => newYScale(d)) 
+        .curve(d3.curveMonotoneX);
+        if(type==1){
+          overviewSvg.selectAll("path.line-eda-path-1")
+          .data(EdaData)
+           .attr("d", lineSelected)
+        }
+
+        if(type==3){
+          overviewSvg.selectAll("path.line-bvp-path-3")
+          .data(BvpData)
+           .attr("d", lineSelected)
+        }
+   
+  }
 
 }
-function plot_radar(cuestionarios: SujetoQuestion){
+const datas:any[] = [];
+const dataSujetoRadar:any[] = []
+function plot_radar(cuestionarios: Cuestionarios, sujeto:string) {
+  const featuress = ["PANAS", "STAI", "DIM", "SSSQ"]; // Radar features
+  const width = 250, height = 250; // Radar SVG dimensions
+  const centerX = width / 2, centerY = height / 2; // Radar chart center
+  const maxRadius = 80; // Max radius for the radar chart
+  const colors = ["green", "yellow", "skyblue", "red", "pink"];
+  const pruebas = ["Base", "Fun", "Medi 1", "TSST", "Medi 2"];
   let offsetX = 5;
-  
-  
+  // Clear and recreate the radar SVG
+  const radarContainer = d3
+    .select(".radar-grid-tile .scrollable-container")
+    .selectAll("*")
+    .remove();
 
-    const featuress = ['PANAS', 'STAI', 'DIM', 'SSSQ'];  // Define the features
+  const radarSvg = d3
+    .select(".radar-grid-tile .scrollable-container")
+    .append("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .append("g")
+    .attr("transform", `translate(${centerX / 2},${centerY / 3})`);
 
-             
-              d3.select(".radar-grid-tile .scrollable-container").selectAll("*").remove();
-              const radarSvg = d3.select(".radar-grid-tile .scrollable-container").append("svg")
-              .attr("width", 600)
-              .attr("height", 600)
-              .append("g")
-              .attr("transform", `translate(150 ,50)`)
-              ;
-              let radialScale = d3.scaleLinear()
-                .domain([0,10])
-                .range([0,100])
-                let ticks = [2, 4, 6, 8, 10];
-              radarSvg.selectAll("circle")
-              .data(ticks)
-              .join(
-                  enter => enter.append("circle")
-                      .attr("cx", 150 / 2)
-                      .attr("cy", 150 / 2)
-                      .attr("fill", "none")
-                      .attr("stroke", "gray")
-                      .attr("r", d => radialScale(d))
-              );
-              
-              radarSvg.selectAll(".ticklabel")
-              .data(ticks)
-              .join(
-                  enter => enter.append("text")
-                      .attr("class", "ticklabel")
-                      .attr("x", 150 / 2 )
-                      .attr("y", d => 150 / 2 - radialScale(d))
-                      .text(d => d.toString())
-                      .attr("font-size","10px")
-              );
-              function angleToCoordinate(angle : number, value : number){
-                let x = Math.cos(angle) * radialScale(value);
-                let y = Math.sin(angle) * radialScale(value);
-                return {"x": 150 / 2 + x, "y": 150 / 2 - y};
-            }
-            let featureData = featuress.map((f, i) => {
-              let angle = (Math.PI / 2) + (2 * Math.PI * i / featuress.length);
-              return {
-                  "name": f,
-                  "angle": angle,
-                  "line_coord": angleToCoordinate(angle, 10),
-                  "label_coord": angleToCoordinate(angle, 10.5)
-              };
-          });
-          
-          // draw axis line
-          radarSvg.selectAll("line")
-              .data(featureData)
-              .join(
-                  enter => enter.append("line")
-                      .attr("x1", 150 / 2)
-                      .attr("y1", 150 / 2)
-                      .attr("x2", d => d.line_coord.x)
-                      .attr("y2", d => d.line_coord.y)
-                      .attr("stroke","black")
-              );
-          
-          // draw axis label
-          radarSvg.selectAll(".axislabel")
-              .data(featureData)
-              .join(
-                  enter => enter.append("text")
-                      .attr("x", d => d.label_coord.x)
-                      .attr("y", d => d.label_coord.y)
-                      .text(d => d.name)
-              );
-            let line = d3.line<{ x: number, y: number }>()
-                .x(d => d.x)
-                .y(d => d.y);
-                
-            let colors = ["green", "yellow", "skyblue" , "red" , "pink"];
-            let pruebas = ["Base" , "Fun" , "Medi 1" , "TSST" , "Medi 2"];
-            function getPathCoordinates(data_point:any){
-              let coordinates = [];
-              for (var i = 0; i < featuress.length; i++){
-                  let ft_name = featuress[i];
-                  let angle = (Math.PI / 2) + (2 * Math.PI * i / featuress.length);
-                  coordinates.push(angleToCoordinate(angle, data_point[ft_name]));
-              }
-              return coordinates;
-          }
-          console.log(cuestionarios);
-          let data = [];
-          let Datas  = [];
-          for (const key in cuestionarios.Cuestionarios) {
-            if (Object.prototype.hasOwnProperty.call(cuestionarios.Cuestionarios, key)) {
-              const cuestionario = cuestionarios.Cuestionarios[key as keyof typeof cuestionarios.Cuestionarios];
-              let formattedPoint: any = {};
-          
-              featuress.forEach(f => {
-                const value = cuestionario[f as keyof typeof cuestionario];
-                const numPoints = value !== null ? Math.round(value) : 0;  // Convert to number of points (0 if null)
-                formattedPoint[f] =numPoints;  // Convert number to points
-              });
-          
-              Datas.push( formattedPoint );
-            }
-          }
-          
-          //generate the data
-          for (var i = 0; i < 3; i++){
-              let point : any = {};
-              //each feature will be a random number from 1-9
-              featuress.forEach(f => point[f] = 1 + Math.random() * 8);
-              data.push(point);
-          }
-          console.log(Datas);
-          radarSvg.selectAll("path")
-            .data(Datas)
-            .join(
-                enter => enter.append("path")
-                  .datum(d => getPathCoordinates(d))
-                  .attr("d" , line)
-                  .attr("stroke-width", 3)
-                  
-                  .attr("fill", (_, i) => colors[i])
-                  
-                  .attr("opacity", 0.5)
-                  .attr("id",(_, i) => pruebas[i])
-            );
-         
-        
-            
-        offsetX += 5;
+  // Scale for radial distances
+  const radialScale = d3.scaleLinear().domain([0, 10]).range([0, maxRadius]);
+
+  // Ticks for the radar grid
+  const ticks = [2, 4, 6, 8, 10];
+
+  // Draw radar circles
+  radarSvg
+    .selectAll("circle")
+    .data(ticks)
+    .join("circle")
+    .attr("cx", centerX / 2)
+    .attr("cy", centerY / 2)
+    .attr("fill", "none")
+    .attr("stroke", "gray")
+    .attr("r", d => radialScale(d));
+
+  // Add tick labels
+  radarSvg
+    .selectAll(".ticklabel")
+    .data(ticks)
+    .join("text")
+    .attr("class", "ticklabel")
+    .attr("x", centerX / 2)
+    .attr("y", d => centerY / 2 - radialScale(d))
+    .text(d => d.toString())
+    .attr("font-size", "10px");
+
+  // Convert angles to coordinates
+  const angleToCoordinate = (angle: number, value: number) => {
+    const x = Math.cos(angle) * radialScale(value);
+    const y = Math.sin(angle) * radialScale(value);
+    return { x: centerX / 2 + x, y: centerY / 2 - y };
+  };
+
+  // Map features to angles
+  const featureData = featuress.map((f, i) => {
+    const angle = (Math.PI / 2) + (2 * Math.PI * i / featuress.length);
+    return {
+      name: f,
+      angle: angle,
+      line_coord: angleToCoordinate(angle, 10),
+      label_coord: angleToCoordinate(angle, 11),
+    };
+  });
+
+  // Draw axis lines
+  radarSvg.selectAll("line")
+  .data(featureData)
+  .join(
+      enter => enter.append("line")
+          .attr("x1", 125 / 2)
+          .attr("y1", 125 / 2)
+          .attr("x2", d => d.line_coord.x)
+          .attr("y2", d => d.line_coord.y)
+          .attr("stroke","black")
+  );
+  // Draw axis labels
+  radarSvg.selectAll(".axislabel")
+    .data(featureData)
+    .join(
+        enter => enter.append("text")
+            .attr("x", d => d.label_coord.x)
+            .attr("y", d => d.label_coord.y)
+            .text(d => d.name)
+    );
+
+  // Radar line generator
+  const line = d3
+    .line<{ x: number; y: number }>()
+    .x(d => d.x)
+    .y(d => d.y);
+
+  // Convert data points to radar coordinates
+  function getPathCoordinates(data_point:any){
+    let coordinates = [];
+    for (var i = 0; i < featuress.length; i++){
+        let ft_name = featuress[i];
+        let angle = (Math.PI / 2) + (2 * Math.PI * i / featuress.length);
+        coordinates.push(angleToCoordinate(angle, data_point[ft_name]));
+    }
+    return coordinates;
+}
+
+  // Format cuestionarios into radar data
+ 
+
+  // Generate the data
+  dataSujetoRadar.push(sujeto);
+  for (let i = 0; i < 1; i++) {
+    var point: any= {}; // Initialize as a partial Cuestionarios object
+  
+    // Dynamically generate each feature
+    featuress.forEach(f => {
+      const value = cuestionarios[f as keyof typeof cuestionarios];
+      const numPoints = value !== null ? Math.round(value) : 0;
+      point[f] = numPoints;
+      
+    });
     
+    datas.push(point); // Type assertion to ensure point matches Cuestionarios
+  }
+  datas.forEach((item, index) => {
+    console.log(`Element ${index} type:`, typeof item);
+    console.log(`Element ${index} structure:`,typeof item);
+  });
+    
+  radarSvg.selectAll("path")
+  .data(datas)
+  .join(
+      enter => enter.append("path")
+        .datum(d => getPathCoordinates(d))
+        .attr("d" , line)
+        .attr("stroke-width", 3)
+        
+        .attr("fill", (_, i) => colors[i])
+        
+        .attr("opacity", 0.3)
+        .attr("id",(_, i) => dataSujetoRadar[i])
+  );
 
+
+  
+  offsetX += 5;
+  console.log("Radar data plotted:", datas);
 }

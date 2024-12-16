@@ -68,6 +68,9 @@ export class AppComponent {
     if (this.pcaVisualization) {
       this.pcaVisualization.onSingalChange(this.selectedCheckbox);
     } // P
+    if (this.aeVisualization) {
+      this.aeVisualization.onSingalChange(this.selectedCheckbox);
+    } // 
   }
   goBack() {
     this.showGrid = false; // Go back to the initial component
