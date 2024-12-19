@@ -212,7 +212,7 @@ export class AeVisualizationComponent {
     const xLine = d3.scaleLinear()
       .domain([minX ||0, maxX|| 0 ])
       .range([0, this.width]);
-
+      var _this = this;
     const yLine = d3.scaleLinear()
       .domain([minY ||0, maxY || 0])
       .range([this.height, 0]);
@@ -371,9 +371,9 @@ export class AeVisualizationComponent {
         }
         
         colorV.push(color)
-            plot_chart_segments(edadata1[index2],questiondata[index2],1 ,"EDA",test);
-            plot_chart_segments(data[index2],questiondata[index2],2 ,"TEMP",test);
-            plot_chart_segments(bvpdata[index2],questiondata[index2],3 ,"BVP",test);
+            plot_chart_segments(edadata1[index2],questiondata[index2],1 ,"EDA",test,_this.signal);
+            plot_chart_segments(data[index2],questiondata[index2],2 ,"TEMP",test,_this.signal);
+            plot_chart_segments(bvpdata[index2],questiondata[index2],3 ,"BVP",test,_this.signal);
             plot_segments(edadata1[index2],questiondata[index2],colorV)
            
            
@@ -997,7 +997,7 @@ let EdaData: number[][] = [];
 let TemppData: number[][] = [];
 let BvpData: number[][] = [];
 let SujetosGlobal:string[]=[];
-async function plot_chart_segments(data: SujetoData , questionData : SujetoQuestion , type : any,signal : string,test:string) {
+async function plot_chart_segments(data: SujetoData , questionData : SujetoQuestion , type : any,signal : string,test:string,signalColor:string) {
   
   const margin_focus = {top: 30, right: 30, bottom: 30, left: 20};
       const width_focus = 800- margin_focus.left ;
@@ -1059,7 +1059,7 @@ if (!prueba) {
         .domain([d3.min(datosFiltrados)!, d3.max(datosFiltrados)!]) // Ajusta el dominio según tus datos
         .range([height_focus, 0]); // Alto del gráfico secundario temporal
         let yScaleSelectedNew = d3.scaleLinear()
-        .domain([d3.min(datosFiltrados)!, d3.max(datosFiltrados)!]) // Ajusta el dominio según tus datos
+        .domain([d3.min(EdaminDatos)!, d3.max(EdamaxDatos)!]) // Ajusta el dominio según tus datos
         .range([height_focus, 0]);  
         let lineSelected = d3.line<number>()
         .x((d, i) => xScaleSelected(new Date(fechasFiltradasSolo[i])))
@@ -1115,13 +1115,60 @@ if (!prueba) {
   if (overviewSvg.empty()) {
     
     // Create SVG container if it doesn't exist
+    let overviewSvg2:any;
     overviewSvg = newGridTile.append("svg")
-            .attr("width", width_focus  )
+            .attr("width", width_focus)
             .attr("height", height_focus + 20 )
             .call(zoom)
             .append("g")
             .attr("transform", `translate(30,0)`);
-
+            if (signalColor === "eda") {
+              overviewSvg2 = d3.select(".eda-grid-tile .scrollable-container svg g").append("rect")
+                  .attr("x", 0)  // Top-left corner of the rectangle
+                  .attr("y", 0)
+                  .attr("width", width_focus)
+                  .attr("height", height_focus +20)
+                  .style("fill", "rgba(255, 0, 0, 0.2)")
+                  .style("opacity",0.5); // Slightly transparent red
+          }else if(signalColor==="bvp"){
+            overviewSvg2 = d3.select(".bvp-grid-tile .scrollable-container svg g").append("rect")
+                  .attr("x", 0)  // Top-left corner of the rectangle
+                  .attr("y", 0)
+                  .attr("width", width_focus)
+                  .attr("height", height_focus +20)
+                  .style("fill", "rgba(71, 26, 196, 0.2)")
+                  .style("opacity",0.5); // Slightly transparent red
+          }else if (signalColor==="temp"){
+            overviewSvg2 = d3.select(".temp-grid-tile .scrollable-container svg g").append("rect")
+            .attr("x", 0)  // Top-left corner of the rectangle
+            .attr("y", 0)
+            .attr("width", width_focus)
+            .attr("height", height_focus +20)
+            .style("fill", "rgba(0, 255, 0, 0.2)")
+            .style("opacity",0.5); // Slightly transparent red
+          }else{
+            overviewSvg2 = d3.select(".eda-grid-tile .scrollable-container svg g").append("rect")
+                  .attr("x", 0)  // Top-left corner of the rectangle
+                  .attr("y", 0)
+                  .attr("width", width_focus)
+                  .attr("height", height_focus +20)
+                  .style("fill", "rgba(255, 0, 0, 0.2)")
+                  .style("opacity",0.5); // Slightly transparent red
+                  overviewSvg2 = d3.select(".bvp-grid-tile .scrollable-container svg g").append("rect")
+                  .attr("x", 0)  // Top-left corner of the rectangle
+                  .attr("y", 0)
+                  .attr("width", width_focus)
+                  .attr("height", height_focus +20)
+                  .style("fill", "rgba(71, 26, 196, 0.2)")
+                  .style("opacity",0.5); // Slightly transparent red
+                  overviewSvg2 = d3.select(".temp-grid-tile .scrollable-container svg g").append("rect")
+            .attr("x", 0)  // Top-left corner of the rectangle
+            .attr("y", 0)
+            .attr("width", width_focus)
+            .attr("height", height_focus +20)
+            .style("fill", "rgba(0, 255, 0, 0.2)")
+            .style("opacity",0.5); // Slightly transparent red
+          }
     // Add X and Y axes only the first time
     overviewSvg.append("g")
     .attr("class","x-axis")
@@ -1371,7 +1418,6 @@ if (!prueba) {
           .data(EdaData)
            .attr("d", lineSelected)
         }
-
         if(type==3){
           overviewSvg.selectAll("path.line-bvp-path-3")
           .data(BvpData)
@@ -1381,6 +1427,7 @@ if (!prueba) {
   }
 
 }
+
 const datas:any[] = [];
 const dataSujetoRadar:any[] = []
 function plot_radar(cuestionarios: Cuestionarios, sujeto:string) {

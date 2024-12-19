@@ -162,8 +162,8 @@ private async plot_sparkplot(data: SujetoData , questionData : SujetoQuestion) {
   var _this = this;
   console.log("inside",questionData.Cuestionarios)
   const margin_focus = {top: 20, right: 30, bottom: 20, left: 20};
-      const width_focus = 800- margin_focus.left - margin_focus.right;
-      const height_focus = 150 - margin_focus.top - margin_focus.bottom;
+      const width_focus = 1000- margin_focus.left - margin_focus.right;
+      const height_focus = 200 - margin_focus.top - margin_focus.bottom;
         // Al hacer clic en la línea, actualizar el gráfico secundario
         
         

@@ -75,7 +75,7 @@ export class PcaVisualizationComponent {
   globalMaxY = 0;
   private platformId: object;
   private nameSignal:string ="tsst_pca_";
-  private  margin = {top: 10, right: 0, bottom: 10, left: 20};
+  private  margin = {top: 20, right: 0, bottom: 10, left: 20};
   private width = 450 - this.margin.left - this.margin.right;
   private height = 140 - this.margin.top - this.margin.bottom;
   private data: SujetoData[] = [] ;
@@ -390,7 +390,7 @@ export class PcaVisualizationComponent {
     .attr('y', 10 + index * 20) // Ajusta el espacio vertical entre el texto y el rectángulo
     .text(`${key} ${name}`)
     .style('font-size', '12px')
-    .attr('alignment-baseline', 'middle');
+    .attr('alignment-baseline', 'right');
 });
 
     });
