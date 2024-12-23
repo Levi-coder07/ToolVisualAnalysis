@@ -4,12 +4,11 @@
   height: 100%;
   max-height: auto;
   max-width: auto;
-  overflow-x: auto; /* Permite scroll horizontal */
-  overflow-y: auto; /* Permite scroll vertical */
+ /* Permite scroll vertical */
   border-left: 1px solid;
-  border: 0.5px solid hsl(180, 23%, 91%);
+  border: 0.5px solid #CDC1FF;
   padding: 5px;
-  background-color: #F8FAFC;
+  background-color: #FFF6F6;
   display: block; /* Cambia de flex a block para evitar conflictos de dimensionamiento */
   box-sizing: border-box; /* Garantiza que el padding y el borde no excedan el tamaño */
 }

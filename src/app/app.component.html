@@ -1,6 +1,6 @@
 <div id="tooltip" class="tooltip" style="opacity: 0;"></div>
 
-<mat-grid-list cols="5" rowHeight="120" gutterSize="1px">
+<mat-grid-list cols="5" rowHeight="80" gutterSize="1px">
   <mat-grid-tile [colspan]="1" [rowspan]="2">
     <div class="scrollable-container" >
      
@@ -16,7 +16,7 @@
         </div>
       </mat-grid-tile>
       
-    <mat-grid-tile class="button-grid-tile" [colspan]="1" [rowspan]="2">
+    <mat-grid-tile class="button-grid-tile" [colspan]="1" [rowspan]="3">
       <div class="scrollable-container">
         <div class="button-container">
           <h1>Seleccionar tipo de visualización</h1>
@@ -63,7 +63,7 @@
       </div>
     </mat-grid-tile>
     
-    <mat-grid-tile class="pca-grid-tile"[colspan]="2" [rowspan]="2">
+    <mat-grid-tile class="pca-grid-tile"[colspan]="2" [rowspan]="3">
       <div class="scrollable-container" >
         <app-pca-visualization #pcaVisualization  [option]="selectedOption" [prueba]="selectedPrueba" [signal]="selectedCheckbox" ></app-pca-visualization>
         
@@ -71,21 +71,21 @@
       </div>
     </mat-grid-tile>
     
-    <mat-grid-tile [colspan]="2" [rowspan]="2">
+    <mat-grid-tile class="ae-grid" [colspan]="2" [rowspan]="3">
       <div class="scrollable-container" >
         <app-ae-visualization #aeVisualization [option]="selectedOption" [prueba]="selectedPrueba" [signal]="selectedCheckbox"></app-ae-visualization>
         
         
       </div>
     </mat-grid-tile>
-    <mat-grid-tile [colspan]="1" [rowspan]="3">
+    <mat-grid-tile [colspan]="1" [rowspan]="6">
       <div class="scrollable-container" >
        
         
         
       </div>
     </mat-grid-tile>
-    <mat-grid-tile class="eda-grid-tile" [colspan]="2" [rowspan]="1">
+    <mat-grid-tile class="eda-grid-tile" [colspan]="2" [rowspan]="2">
       
       <div class="scrollable-container">
         
@@ -93,12 +93,12 @@
       
     </mat-grid-tile>
     
-    <mat-grid-tile class="radar-grid-tile" [colspan]="1" [rowspan]="2">
+    <mat-grid-tile class="radar-grid-tile" [colspan]="1" [rowspan]="3">
       <div class="scrollable-container">
        
       </div>
     </mat-grid-tile>
-    <mat-grid-tile class="temp-grid-tile" [colspan]="2" [rowspan]="1">
+    <mat-grid-tile class="temp-grid-tile" [colspan]="2" [rowspan]="2">
       
       <div class="scrollable-container">
         
@@ -106,12 +106,12 @@
       
       
     </mat-grid-tile>
-    <mat-grid-tile class="radars-grid-tile" [colspan]="1" [rowspan]="2">
+    <mat-grid-tile class="radars-grid-tile" [colspan]="1" [rowspan]="3">
       <div class="scrollable-container">
        
       </div>
     </mat-grid-tile>
-    <mat-grid-tile class="bvp-grid-tile" [colspan]="2" [rowspan]="1">
+    <mat-grid-tile class="bvp-grid-tile" [colspan]="2" [rowspan]="2">
       
       <div class="scrollable-container">
         

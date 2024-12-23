@@ -75,7 +75,7 @@ export class PcaVisualizationComponent {
   globalMaxY = 0;
   private platformId: object;
   private nameSignal:string ="tsst_pca_";
-  private  margin = {top: 20, right: 0, bottom: 10, left: 20};
+  private  margin = {top: 10, right: 0, bottom: 10, left: 20};
   private width = 450 - this.margin.left - this.margin.right;
   private height = 140 - this.margin.top - this.margin.bottom;
   private data: SujetoData[] = [] ;
@@ -148,6 +148,9 @@ export class PcaVisualizationComponent {
       // Aquí puedes usar this.data en tu componente
   
     });
+    let container2 = d3.select(".pca-grid-tile .scrollable-container")
+    const containerWidth2 = parseInt(container2.style("width"));
+    const containerHeight2 = parseInt(container2.style("height"));
     this.DataService.loadDataBVP();
     this.DataService.bvpData$.subscribe(data2 => {
       bvpdata = data2;
@@ -158,8 +161,8 @@ export class PcaVisualizationComponent {
     svgSelection.remove();
   }
     let svg = d3.select("#chart-overview").append("svg")
-    .attr("width", this.width + this.margin.left + this.margin.right)
-    .attr("height", this.height + this.margin.top + this.margin.bottom)
+    .attr("width",containerWidth2-50 )
+    .attr("height", containerHeight2-80)
   
     
     .attr("transform", `translate(${this.margin.left},${this.margin.top})`);
@@ -197,23 +200,31 @@ export class PcaVisualizationComponent {
     }
       
       else{
-        if(maxY  && minY){
-          maxY = maxY + 300;
-          minY = minY - 300; 
-        }
-        if(maxX && minX){
-          maxX = maxX + 500;
-          minX = minX - 500;
-        }
+        // Calcular el rango y aplicar padding para Y
+if (maxY !== undefined && minY !== undefined) {
+  const rangeY = maxY - minY;
+  const paddingY = rangeY * 0.1; // 10% de padding
+  maxY += paddingY;
+  minY -= paddingY;
+}
+
+// Calcular el rango y aplicar padding para X
+if (maxX !== undefined && minX !== undefined) {
+  const rangeX = maxX - minX;
+  const paddingX = rangeX * 0.2; // 20% de padding
+  maxX += paddingX;
+  minX -= paddingX;
+}
+
       }
     // Configurar las escalas
     const xLine = d3.scaleLinear()
       .domain([minX ||0, maxX|| 0 ])
-      .range([0, this.width]);
+      .range([0, containerWidth2]);
 
     const yLine = d3.scaleLinear()
       .domain([minY ||0, maxY || 0])
-      .range([this.height, 0]);
+      .range([containerHeight2-containerHeight2*0.35, 0]);
       console.log("Datos cargados:", pca_tsst);
       const color = d3.scaleOrdinal(d3.schemeCategory10)
       .domain(sujetos);
@@ -226,15 +237,23 @@ export class PcaVisualizationComponent {
       });
       
       let zoom = d3.zoom()
-         .scaleExtent([0.5 , 32])
+         .scaleExtent([1 , 32])
          .on("zoom", zoomed) as any;
          var event_rect = svg.append("rect")
-    	.attr("width", this.width )
-    	.attr("height", this.height )
-    	.style("fill", "none")
+    	.attr("width",  containerWidth2-20 )
+    	.attr("height", containerHeight2-80)
+    	.style("fill", "#D9EAFD")
+      .style("border","black")
+      .style("stroke-dasharray", "4,2")          // Patrón de guiones y espacios para borde puntilloso
+    .style("stroke-linecap", "round")          // Estilo de los extremos de los guiones
     	.style("pointer-events", "all")
     
     	.call(zoom);
+      const xAxis = d3.axisBottom(xLine);
+const yAxis = d3.axisLeft(yLine);
+
+// Agregar ejes al SVG
+
   function zoomed({ transform }: { transform: ZoomTransform }){
             var new_x = transform.rescaleX(xLine);
             var new_y = transform.rescaleY(yLine);
@@ -270,9 +289,10 @@ export class PcaVisualizationComponent {
     .data(pca_tsst)
     .enter()
     .append("circle")
-      .attr("cx", function (d) { return xLine(d.Point[0]); } )
-      .attr("cy", function (d) { return yLine(d.Point[1]); } )
+      .attr("cx", d => xLine(d.Point[0]) )
+      .attr("cy", d => yLine(d.Point[1]) )
       .attr("r", 4)
+      
       .attr("id", (_, i) => `${sujetos[i]}`)
       .style("fill", (_, i) => getColor(sujetos[i], b, colorScale))
           .attr("fill", "none")
@@ -373,7 +393,7 @@ export class PcaVisualizationComponent {
          
           
           const legend = svg.append("g")
-          .attr("transform", `translate(${this.width -100}, 20)`); // Adjust position
+          .attr("transform", `translate(${this.width }, 20)`); // Adjust position
           colorScale.domain().forEach((key, index) => {
   // Agrega un rectángulo para cada color
   console.log('key' , key)
@@ -986,7 +1006,11 @@ let TemppData: number[][] = [];
 let BvpData: number[][] = [];
 let SujetosGlobal:string[]=[];
 async function plot_chart_segments(data: SujetoData , questionData : SujetoQuestion , type : any,signal : string,test:string,signalColor:string) {
+  let container = d3.select(".eda-grid-tile .scrollable-container");
   
+  // Get the container's width and height
+      const containerWidth = parseInt(container.style("width"));
+      const containerHeight = parseInt(container.style("height"));
   const margin_focus = {top: 30, right: 30, bottom: 30, left: 20};
       const width_focus = 800- margin_focus.left ;
       const height_focus = 120 - margin_focus.top;
@@ -1045,10 +1069,10 @@ if (!prueba) {
       // Escala Y para el gráfico secundario temporal
       const yScaleSelected = d3.scaleLinear()
         .domain([d3.min(datosFiltrados)!, d3.max(datosFiltrados)!]) // Ajusta el dominio según tus datos
-        .range([height_focus, 0]); // Alto del gráfico secundario temporal
+        .range([containerHeight, 0]); // Alto del gráfico secundario temporal
         let yScaleSelectedNew = d3.scaleLinear()
         .domain([d3.min(EdaminDatos)!, d3.max(EdamaxDatos)!]) // Ajusta el dominio según tus datos
-        .range([height_focus, 0]);  
+        .range([containerHeight, 0]);  
         let lineSelected = d3.line<number>()
         .x((d, i) => xScaleSelected(new Date(fechasFiltradasSolo[i])))
         .y(d => yScaleSelectedNew(d))
@@ -1063,7 +1087,7 @@ if (!prueba) {
         newGridTile = d3.select(".eda-grid-tile .scrollable-container");
         yScaleSelectedNew = d3.scaleLinear()
             .domain([d3.min(EdaminDatos)!, d3.max(EdamaxDatos)!]) // Ajusta el dominio según tus datos
-            .range([height_focus, 0]);
+            .range([containerHeight-containerHeight*0.15, 0]);
             lineSelected = d3.line<number>()
             .x((d, i) => xScaleSelected(new Date(fechasFiltradasSolo[i])))
             .y(d => yScaleSelectedNew(d))
@@ -1075,7 +1099,7 @@ if (!prueba) {
         newGridTile = d3.select(".temp-grid-tile .scrollable-container");
         yScaleSelectedNew = d3.scaleLinear()
             .domain([d3.min(TempminDatos)!, d3.max(TempmaxDatos)!]) // Ajusta el dominio según tus datos
-            .range([height_focus, 0]);
+            .range([containerHeight-containerHeight*0.15, 0]);
             lineSelected = d3.line<number>()
         .x((d, i) => xScaleSelected(new Date(fechasFiltradasSolo[i])))
         .y(d => yScaleSelectedNew(d))
@@ -1087,7 +1111,7 @@ if (!prueba) {
         newGridTile = d3.select(".bvp-grid-tile .scrollable-container");
         yScaleSelectedNew = d3.scaleLinear()
             .domain([d3.min(BvpminDatos)!, d3.max(BvpmaxDatos)!]) // Ajusta el dominio según tus datos
-            .range([height_focus, 0]);
+            .range([containerHeight-containerHeight*0.15, 0]);
             lineSelected = d3.line<number>()
         .x((d, i) => xScaleSelected(new Date(fechasFiltradasSolo[i])))
         .y(d => yScaleSelectedNew(d))
@@ -1096,7 +1120,7 @@ if (!prueba) {
       let zoom = d3.zoom()
      
         .scaleExtent([1, 3])
-        .translateExtent([[10, 0], [width_focus, height_focus]]) // Set zoom scale range
+        .translateExtent([[10, 0], [containerWidth, containerHeight]]) // Set zoom scale range
         .on("zoom", zoomed) as any;
       let overviewSvg = newGridTile.select<SVGGElement>("svg g");
       
@@ -1105,17 +1129,19 @@ if (!prueba) {
     // Create SVG container if it doesn't exist
     let overviewSvg2:any;
     overviewSvg = newGridTile.append("svg")
-            .attr("width", width_focus)
-            .attr("height", height_focus + 20 )
+            .attr("width", containerWidth)
+            .attr("height", containerHeight )
             .call(zoom)
             .append("g")
-            .attr("transform", `translate(30,0)`);
+            .attr("width", containerWidth)
+            .attr("height", containerHeight )
+            .attr("transform", `translate(30,-10)`);
             if (signalColor === "eda") {
               overviewSvg2 = d3.select(".eda-grid-tile .scrollable-container svg g").append("rect")
                   .attr("x", 0)  // Top-left corner of the rectangle
                   .attr("y", 0)
                   .attr("width", width_focus)
-                  .attr("height", height_focus +20)
+                  .attr("height", containerHeight-20 )
                   .style("fill", "rgba(255, 0, 0, 0.2)")
                   .style("opacity",0.5); // Slightly transparent red
           }else{
@@ -1123,14 +1149,14 @@ if (!prueba) {
                   .attr("x", 0)  // Top-left corner of the rectangle
                   .attr("y", 0)
                   .attr("width", width_focus)
-                  .attr("height", height_focus +20)
+                  .attr("height", containerHeight -20)
                   .style("fill", "rgba(71, 26, 196, 0.2)")
                   .style("opacity",0.5); // Slightly transparent red
           }
     // Add X and Y axes only the first time
     overviewSvg.append("g")
     .attr("class","x-axis")
-      .attr("transform", `translate(0,${height_focus})`)
+      .attr("transform", `translate(0,${containerHeight-20})`)
       .call(d3.axisBottom(xScaleSelected));
 
     overviewSvg.append("g")
@@ -1170,7 +1196,13 @@ if (!prueba) {
           d3.select(this)
               .style("stroke", "orange") // Highlight color
               .style("stroke-width", 3); // Thicker line for emphasis
-      
+              d3.selectAll(`.eda-grid-tile .scrollable-container svg g path`)
+              .style("stroke","black")
+              .style("opacity", 0.1); 
+              d3.select(this)
+              .style("stroke", "red")
+              .style("opacity", 1) // Highlight color
+              .style("stroke-width", 3);
           // Highlight the specific path in the radar chart
           d3.selectAll(`.radar-grid-tile .scrollable-container svg g path`)
                   .style("fill","green")
@@ -1214,6 +1246,7 @@ if (!prueba) {
       
           // Reset the opacity of all lines in the overview chart
           overviewSvg.selectAll("path")
+          .style("stroke","red")
               .style("opacity", 1); // Restore original visibility
       
           tooltip.style("opacity", 0); // Hide tooltip
@@ -1301,9 +1334,7 @@ if (!prueba) {
           .style("fill", "none")
           .on("mouseover", function () {
             // Highlight the hovered line
-            d3.select(this)
-                .style("stroke", "orange") // Highlight color
-                .style("stroke-width", 3); // Thicker line for emphasis
+            // Thicker line for emphasis
         
             // Highlight the specific path in the radar chart
             d3.selectAll(`.radar-grid-tile .scrollable-container svg g path`)
@@ -1314,11 +1345,18 @@ if (!prueba) {
                 .style("opacity", 0.8); // Ensure it's fully visible
         
             // Lowlight all other lines in the overview chart
+            d3.selectAll(`.bvp-grid-tile .scrollable-container svg g path`)
+                    .style("stroke","#D9EAFD")
+                    .style("opacity", 0.2); 
+                    d3.select(this)
+                    .style("stroke", "black") // Highlight color
+                    .style("stroke-width", 3)
+                    .style("opacity", 1); // Thicker line for emphasis
             overviewSvg.selectAll("path")
                 .filter(function () {
                     return this !== d3.select(this).node(); // Exclude the hovered line
                 })
-                .style("opacity", 0.2); // Dim other lines
+                .style("opacity", 1); // Dim other lines
         
             tooltip.style("opacity", 1); // Show tooltip
         })
@@ -1338,7 +1376,7 @@ if (!prueba) {
             // Reset the hovered line's style
             d3.select(this)
                 .style("stroke", "black") // Default stroke color
-                .style("stroke-width", 1.5); // Default stroke width
+                .style("stroke-width", 1.0); // Default stroke width
         
                 d3.select(`.radar-grid-tile .scrollable-container svg g path`)
                     .style("opacity", 0.8); 
@@ -1348,7 +1386,8 @@ if (!prueba) {
         
             // Reset the opacity of all lines in the overview chart
             overviewSvg.selectAll("path")
-                .style("opacity", 1); // Restore original visibility
+                .style("opacity", 1)
+                .style("stroke","black"); // Restore original visibility
         
             tooltip.style("opacity", 0); // Hide tooltip
         });

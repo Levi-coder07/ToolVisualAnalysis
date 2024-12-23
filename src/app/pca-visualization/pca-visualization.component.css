@@ -3,9 +3,10 @@
     line-height: 1.4;
 }
 .container {
-    display: flex;
-   
-  }
+  display: block;
+ 
+}
+
  
   .container mat-select {
     font-size: small; /* Adjust font size */
