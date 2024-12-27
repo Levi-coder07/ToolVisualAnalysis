@@ -19,20 +19,29 @@
     <mat-grid-tile class="button-grid-tile" [colspan]="1" [rowspan]="3">
       <div class="scrollable-container">
         <div class="button-container">
-          <h1>Seleccionar tipo de visualización</h1>
-          @for (button of buttons; track button.component;) {
+          <h1>Seleccionar tipo de reduccion de dimensionalidad</h1>
+          <div class="checkbox-container">
+            <mat-checkbox
+              [checked]="selectedCheckbox2 === 'pca'"
+              (change)="onOptionChange('pca')"
+            >
+              PCA
+            </mat-checkbox>
+            <mat-checkbox
+              [checked]="selectedCheckbox2 === 'tsne'"
+              (change)="onOptionChange('tsne')"
+            >
+              TSNE
+            </mat-checkbox>
+            <mat-checkbox
+              [checked]="selectedCheckbox2 === 'umap'"
+              (change)="onOptionChange('umap')"
+            >
+              UMAP
+            </mat-checkbox>
             
-            @if(button.component === selectedButton) {
-              <mat-select [(value)]="selectedOption" (selectionChange)="onOptionChange($event.value)">
-                <mat-option *ngFor="let option of options" [value]="option">{{option}}</mat-option>
-              </mat-select>
-                
-              
-            }
-              
-            } @empty {
-            <li>There are no items.</li>
-            }
+          </div>
+            <h1>Selecciona la señal de interes</h1>
             <div class="checkbox-container">
               <mat-checkbox
                 [checked]="selectedCheckbox === 'eda'"
@@ -93,7 +102,13 @@
       
     </mat-grid-tile>
     
-    <mat-grid-tile class="radar-grid-tile" [colspan]="1" [rowspan]="3">
+    <mat-grid-tile class="radar-grid-tile" [colspan]="1" [rowspan]="6">
+      <div class="scrollable-container">
+       
+      </div>
+    
+    </mat-grid-tile>
+    <mat-grid-tile class="radars-grid-tile" [colspan]="1" [rowspan]="6">
       <div class="scrollable-container">
        
       </div>
@@ -106,11 +121,7 @@
       
       
     </mat-grid-tile>
-    <mat-grid-tile class="radars-grid-tile" [colspan]="1" [rowspan]="3">
-      <div class="scrollable-container">
-       
-      </div>
-    </mat-grid-tile>
+    
     <mat-grid-tile class="bvp-grid-tile" [colspan]="2" [rowspan]="2">
       
       <div class="scrollable-container">

@@ -73,69 +73,55 @@ export class PcaVisualizationComponent {
   valor : number = 0;
   type = 0;
   globalMaxY = 0;
-  private platformId: object;
-  private nameSignal:string ="tsst_pca_";
-  private  margin = {top: 10, right: 0, bottom: 10, left: 20};
-  private width = 450 - this.margin.left - this.margin.right;
-  private height = 140 - this.margin.top - this.margin.bottom;
-  private data: SujetoData[] = [] ;
-  private edadata: SujetoData[] = [] ;
-  private pca_data : pca_data[] = [];
-  public title : string = "Scatter Plot - Overview";
-  names_pca: string[] = ["eda_pca","eda_segments_pca","fun_pca_", "tsst_pca_" ];
-  names_tsne: string[] = ["eda_tsne","eda_segments_tsne","fun_tsne_eda", "tsst_tsne_eda" ];
-  names_options_cluster: string[] = ["complete","segments","fun", "TSST" ];
-  metrics: string[] = ["dtw" ,"softdtw" ];
-  names: any;
-  private name_compose! : string ;
-  public colorVector : string[] = [];
-  private clusters: ClusterInfo[] = [];
-  constructor(private renderer: Renderer2 , private DataService : DataService) {
-    this.platformId = inject(PLATFORM_ID);
-    
-  }
-  
-  optionChanged(options:string) {
-    let index = 0;
-    if(options== 'pca'){
-      this.names = this.names_pca;
-    }else{
-      this.names = this.names_tsne;
-    }
-    this.valor = index;
-    this.title = `Estadistico - ${this.names[index]}`;
-    this.pointPlot(this.data, this.names[index],this.prueba,this.signal);
-  }
-  onButtonClick(test: string): void {
-    let selectedNames = this.option === 'pca' ? this.names_pca : this.names_tsne;
-    this.prueba = test;
-    // Busca el nombre correspondiente al test en el array
-    let selectedName = selectedNames.find(name => name.toLowerCase().includes(test.toLowerCase()));
-    console.log("TESTSELECTED",selectedName)
-    if (!selectedName) {
-      console.error(`Test "${test}" no encontrado en el array.`);
-      return;
-    }
-    this.title = `Estadistico - ${this.signal}-${this.prueba}`;
-    this.nameSignal = selectedName;
-    this.pointPlot(this.data, selectedName,this.prueba,this.signal);
-  }
-  private handleZoom(e : any): void {
-    
-    d3.select('svg g')
-    
-    .attr('transform', e.transform);
-  }
-  onSingalChange(signal: string): void {
-    if(this.option == 'pca'){
-      this.names = this.names_pca;
-    }else{
-      this.names = this.names_tsne;
-    }
-    this.signal = signal;
-    this.pointPlot(this.data,this.nameSignal,this.prueba,this.signal);
-  }
-
+ private platformId: object;
+   private nameSignal:string = "eda"
+   private testlocal: string = "tsst"
+   private reduction : string = "pca";
+   private  margin = {top: 10, right: 0, bottom: 10, left: 20};
+   private width = 450 - this.margin.left - this.margin.right;
+   private height = 140 - this.margin.top - this.margin.bottom;
+   private data: SujetoData[] = [] ;
+   private edadata: SujetoData[] = [] ;
+   private pca_data : pca_data[] = [];
+   public title : string = "Estadistico ";
+   names_umap: string[] = ["eda_segments_pca","fun_umap", "tsst_umap" ];
+   names_pca: string[] = ["eda_segments_pca","fun_pca", "tsst_pca" ];
+   names_tsne: string[] = ["eda_segments_tsne","fun_tsne", "tsst_tsne" ];
+   names_options_cluster: string[] = ["complete","segments","fun", "TSST" ];
+   metrics: string[] = ["dtw" ,"softdtw" ];
+   names: any;
+   private name_compose! : string ;
+   public colorVector : string[] = [];
+   private clusters: ClusterInfo[] = [];
+   constructor(private renderer: Renderer2 , private DataService : DataService) {
+     this.platformId = inject(PLATFORM_ID);
+     
+   }
+   
+   optionChanged(options:string) {
+     this.reduction = options;
+     this.title = `Estadistico - ${this.testlocal}-${this.reduction} - ${this.nameSignal}`;
+     this.pointPlot(this.data, this.testlocal,this.reduction,this.nameSignal);
+   }
+   onButtonClick(test: string): void {
+     
+     this.testlocal = test.toLowerCase();
+     this.title = `Estadistico - ${this.testlocal}-${this.reduction} - ${this.nameSignal}`;
+     this.pointPlot(this.data, this.testlocal,this.reduction,this.nameSignal);
+   }
+   private handleZoom(e : any): void {
+     
+     d3.select('svg g')
+     
+     .attr('transform', e.transform);
+   }
+   onSingalChange(signal: string): void {
+     
+     this.nameSignal = signal;
+     this.title = `Estadistico - ${this.testlocal}-${this.reduction} - ${this.nameSignal}`;
+     this.pointPlot(this.data, this.testlocal,this.reduction,this.nameSignal);
+   }
+ 
 
   
   private pointPlot(data : SujetoData[],name: string,test:string,signal:string){
@@ -167,7 +153,7 @@ export class PcaVisualizationComponent {
     
     .attr("transform", `translate(${this.margin.left},${this.margin.top})`);
    console.log(`assets/${name}${signal}.json`);
-    d3.json<pca_data[]>(`assets/${name}${signal}.json`).then((pca_tsst) => {
+    d3.json<pca_data[]>(`assets/estadistico/${name}_pca_${signal}.json`).then((pca_tsst) => {
 
       if (pca_tsst === undefined) {
         console.error("No data loaded.");
@@ -273,7 +259,7 @@ const yAxis = d3.axisLeft(yLine);
          let vss = (8*this.valor)+((this.selectedClusterCount-2)*2) + this.metrics.findIndex(metric => metric === this.selectedMetricType);
          console.log('indeice '  ,vss);
           const b = this.clusters[vss].data;
-          console.log('Clusters' , b);
+          console.log('Clusters' ,this.clusters);
           const colorScale = d3.scaleOrdinal()
       .domain(Object.keys(b))
       .range(d3.schemeCategory10);    
@@ -362,31 +348,31 @@ const yAxis = d3.axisLeft(yLine);
         }
       
   
+        name = name.toUpperCase();
         const usuarioElegido = 'S1';
         console.log(index2);
         console.log(questiondata[index2]); 
-        
-        if (test === "Medi 1") {
+        if (name === "Medi 1") {
           plot_radar(questiondata[index2].Cuestionarios["Medi 1"],data[index2].Sujeto);
-        } else if (test === "TSST") {
+        } else if (name === "TSST") {
           plot_radar(questiondata[index2].Cuestionarios["TSST"],data[index2].Sujeto);
-        } else if (test === "Medi 2") {
+        } else if (name === "Medi 2") {
           plot_radar(questiondata[index2].Cuestionarios["Medi 2"],data[index2].Sujeto);
-        } else if (test === "Fun") {
+        } else if (name === "Fun") {
           plot_radar(questiondata[index2].Cuestionarios["Fun"],data[index2].Sujeto);
-        } else if (test === "Base") {
+        } else if (name === "Base") {
           plot_radar(questiondata[index2].Cuestionarios["Base"],data[index2].Sujeto);
         } else {
           console.error("Invalid test value:", test);
         }
         
         colorV.push(color)
-            plot_chart_segments(edadata1[index2],questiondata[index2],1 ,"EDA",test,_this.signal);
-            plot_chart_segments(data[index2],questiondata[index2],2 ,"TEMP",test,_this.signal);
-            plot_chart_segments(bvpdata[index2],questiondata[index2],3 ,"BVP",test,_this.signal);
+            plot_chart_segments(edadata1[index2],questiondata[index2],1 ,"EDA",name,_this.nameSignal);
+            plot_chart_segments(data[index2],questiondata[index2],2 ,"TEMP",name,_this.nameSignal);
+            plot_chart_segments(bvpdata[index2],questiondata[index2],3 ,"BVP",name,_this.nameSignal);
             plot_segments(edadata1[index2],questiondata[index2],colorV)
            
-            
+           
           });
           let gridDot = d3.selectAll('svg g dot');
           
@@ -398,7 +384,7 @@ const yAxis = d3.axisLeft(yLine);
   // Agrega un rectángulo para cada color
   console.log('key' , key)
   legend.append('rect')
-    .attr('x', 0)
+    .attr('x', 170)
     .attr('y', index * 20) // Ajusta el espacio vertical entre las entradas
     .attr('width', 10)
     .attr('height', 10)
@@ -406,18 +392,18 @@ const yAxis = d3.axisLeft(yLine);
 
   // Agrega texto para cada color
   legend.append('text')
-    .attr('x', 15)
+    .attr('x', 200)
     .attr('y', 10 + index * 20) // Ajusta el espacio vertical entre el texto y el rectángulo
-    .text(`${key} ${name}`)
+    .text(`${key}`)
     .style('font-size', '12px')
     .attr('alignment-baseline', 'right');
 });
 
     });
   }
-  private loadClusterData(type: string, number: number, metric: string): void {
-    const url = `assets/${type}_cluster/${type}_N_Cluster_${number}_${metric}.json`;
-
+  private loadClusterData(type: string, metric: string,signal:string): void {
+    const url = `assets/ae-cluster/autoencoder_${type}_${metric}_${signal}_clusters.json`;
+    console.log(url)
     d3.json<ClusterData>(url).then(data => {
       if (data === undefined) {
         console.error(`No data loaded from ${url}.`);
@@ -457,22 +443,21 @@ const yAxis = d3.axisLeft(yLine);
 ngOnInit(): void {
   if (isPlatformBrowser(this.platformId)) {
     this.createChart();
-    const types = ["complete", "segments", "fun", "tsst"];
-    const numbers = [2, 3, 4, 5]; // Cluster numbers
-
-    types.forEach(type => {
-      numbers.forEach(number => {
-        ['dtw', 'softdtw'].forEach(metric => {
-          this.loadClusterData(type, number, metric);
-        });
+    const types = ["tsst", "fun"];
+    const signalss = ["all"]; // Cluster numbers
+    signalss.forEach(signal => {
+      types.forEach(type => {
+      
+          ['pca', 'tsne','umap'].forEach(metric => {
+            this.loadClusterData(type, metric,signal);
+          });
+      
       });
-    });
-  
-}
+    
+  });
     
   }
-  
-
+}
 }
 let globalMaxY = 0;
 let GlobalData : any[][]=[];
@@ -1064,7 +1049,7 @@ if (!prueba) {
         d3.min(fechasFiltradasSolo) as Date,
         d3.max(fechasFiltradasSolo) as Date
       ])
-      .range([0, width_focus]); 
+      .range([0, containerWidth-60]); 
       
       // Escala Y para el gráfico secundario temporal
       const yScaleSelected = d3.scaleLinear()
@@ -1120,7 +1105,7 @@ if (!prueba) {
       let zoom = d3.zoom()
      
         .scaleExtent([1, 3])
-        .translateExtent([[10, 0], [containerWidth, containerHeight]]) // Set zoom scale range
+        .translateExtent([[10, 0], [containerWidth-20, containerHeight]]) // Set zoom scale range
         .on("zoom", zoomed) as any;
       let overviewSvg = newGridTile.select<SVGGElement>("svg g");
       
@@ -1134,29 +1119,44 @@ if (!prueba) {
             .call(zoom)
             .append("g")
             .attr("width", containerWidth)
-            .attr("height", containerHeight )
-            .attr("transform", `translate(30,-10)`);
+            .attr("height", containerHeight  )
+            .attr("transform", `translate(30,0)`);
             if (signalColor === "eda") {
               overviewSvg2 = d3.select(".eda-grid-tile .scrollable-container svg g").append("rect")
                   .attr("x", 0)  // Top-left corner of the rectangle
                   .attr("y", 0)
                   .attr("width", width_focus)
-                  .attr("height", containerHeight-20 )
+                  .attr("height", containerHeight/3 )
                   .style("fill", "rgba(255, 0, 0, 0.2)")
                   .style("opacity",0.5); // Slightly transparent red
-          }else{
+                   overviewSvg2 = d3.select(".eda-grid-tile .scrollable-container svg g").append("rect")
+                                      .attr("x", 0)  // Top-left corner of the rectangle
+                                      .attr("y", (containerHeight * 2) / 3)  // Start at the last third
+                                      .attr("width", width_focus)
+                                      .attr("height", containerHeight / 3)
+                                      .style("fill", "rgba(219, 76, 76, 0.2)")
+                                      .style("opacity",0.5); // Slightly transparent red
+          }else if (signalColor === "bvp") {
             overviewSvg2 = d3.select(".bvp-grid-tile .scrollable-container svg g").append("rect")
-                  .attr("x", 0)  // Top-left corner of the rectangle
-                  .attr("y", 0)
-                  .attr("width", width_focus)
-                  .attr("height", containerHeight -20)
-                  .style("fill", "rgba(71, 26, 196, 0.2)")
-                  .style("opacity",0.5); // Slightly transparent red
+                                .attr("x", 0)  // Top-left corner of the rectangle
+                                .attr("y", 0)
+                                .attr("width", width_focus)
+                                .attr("height", containerHeight/3)
+                                .style("fill", "rgba(105, 72, 194, 0.2)")
+                                .style("opacity",0.5); // Slightly transparent red
+                                d3.select(".bvp-grid-tile .scrollable-container svg g").append("rect")
+                                .attr("x", 0)  // Top-left corner of the rectangle
+                                .attr("y", (containerHeight * 2) / 3)  // Start at the last third
+                                .attr("width", width_focus)
+                                .attr("height", containerHeight / 3)  // Last third height
+                                .style("fill", "rgba(103, 67, 202, 0.2)") // Slightly transparent blue
+                                .style("opacity", 0.5);
           }
+          else{}
     // Add X and Y axes only the first time
     overviewSvg.append("g")
     .attr("class","x-axis")
-      .attr("transform", `translate(0,${containerHeight-20})`)
+      .attr("transform", `translate(0,${containerHeight-30})`)
       .call(d3.axisBottom(xScaleSelected));
 
     overviewSvg.append("g")

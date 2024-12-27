@@ -76,7 +76,9 @@ export class AeVisualizationComponent {
   type = 0;
   globalMaxY = 0;
   private platformId: object;
-  private nameSignal:string = "tsst_pca_"
+  private nameSignal:string = "eda"
+  private testlocal: string = "tsst"
+  private reduction : string = "pca";
   private  margin = {top: 10, right: 0, bottom: 10, left: 20};
   private width = 450 - this.margin.left - this.margin.right;
   private height = 140 - this.margin.top - this.margin.bottom;
@@ -84,9 +86,9 @@ export class AeVisualizationComponent {
   private edadata: SujetoData[] = [] ;
   private pca_data : pca_data[] = [];
   public title : string = "Autoencoder ";
-  
-  names_pca: string[] = ["eda_pca","eda_segments_pca","fun_pca_", "tsst_pca_" ];
-  names_tsne: string[] = ["eda_tsne","eda_segments_tsne","fun_tsne_eda", "tsst_tsne_eda" ];
+  names_umap: string[] = ["eda_segments_pca","fun_umap", "tsst_umap" ];
+  names_pca: string[] = ["eda_segments_pca","fun_pca", "tsst_pca" ];
+  names_tsne: string[] = ["eda_segments_tsne","fun_tsne", "tsst_tsne" ];
   names_options_cluster: string[] = ["complete","segments","fun", "TSST" ];
   metrics: string[] = ["dtw" ,"softdtw" ];
   names: any;
@@ -99,29 +101,15 @@ export class AeVisualizationComponent {
   }
   
   optionChanged(options:string) {
-    let index = 0;
-    if(options== 'pca'){
-      this.names = this.names_pca;
-    }else{
-      this.names = this.names_tsne;
-    }
-    this.valor = index;
-    this.title = `Autoencoder - ${this.names[index]}`;
-    this.pointPlot(this.data, this.names[index],this.prueba,this.signal);
+    this.reduction = options;
+    this.title = `Autoencoder - ${this.testlocal}-${this.reduction} - ${this.nameSignal}`;
+    this.pointPlot(this.data, this.testlocal,this.reduction,this.nameSignal);
   }
   onButtonClick(test: string): void {
-    let selectedNames = this.option === 'pca' ? this.names_pca : this.names_tsne;
-    this.prueba = test;
-    // Busca el nombre correspondiente al test en el array
-    let selectedName = selectedNames.find(name => name.toLowerCase().includes(test.toLowerCase()));
-    console.log("TESTSELECTED",selectedName)
-    if (!selectedName) {
-      console.error(`Test "${test}" no encontrado en el array.`);
-      return;
-    }
-    this.nameSignal = selectedName;
-    this.title = `Autoencoder - ${this.signal}-${this.prueba}`;
-    this.pointPlot(this.data, selectedName,this.prueba,this.signal);
+    
+    this.testlocal = test.toLowerCase();
+    this.title = `Autoencoder - ${this.testlocal}-${this.reduction} - ${this.nameSignal}`;
+    this.pointPlot(this.data, this.testlocal,this.reduction,this.nameSignal);
   }
   private handleZoom(e : any): void {
     
@@ -130,14 +118,10 @@ export class AeVisualizationComponent {
     .attr('transform', e.transform);
   }
   onSingalChange(signal: string): void {
-    if(this.option == 'pca'){
-      this.names = this.names_pca;
-    }else{
-      this.names = this.names_tsne;
-    }
-    this.signal = signal;
-    console.log("AE")
-    this.pointPlot(this.data,this.nameSignal ,this.prueba,this.signal);
+    
+    this.nameSignal = signal;
+    this.title = `Autoencoder - ${this.testlocal}-${this.reduction} - ${this.nameSignal}`;
+    this.pointPlot(this.data, this.testlocal,this.reduction,this.nameSignal);
   }
 
   private pointPlot(data : SujetoData[],name: string,test:string,signal:string){
@@ -171,7 +155,7 @@ export class AeVisualizationComponent {
     
     .attr("transform", `translate(${this.margin.left},${this.margin.top})`);
    
-    d3.json<pca_data[]>(`assets/autoencoder_${name}${signal}.json`).then((pca_tsst) => {
+    d3.json<pca_data[]>(`assets/autoencoder/autoencoder_${name}_${test}_${signal}.json`).then((pca_tsst) => {
 
       if (pca_tsst === undefined) {
         console.error("No data loaded.");
@@ -379,28 +363,28 @@ const yAxis = d3.axisLeft(yLine);
             return;
         }
       
-  
+        name = name.toUpperCase();
         const usuarioElegido = 'S1';
         console.log(index2);
         console.log(questiondata[index2]); 
-        if (test === "Medi 1") {
+        if (name === "Medi 1") {
           plot_radar(questiondata[index2].Cuestionarios["Medi 1"],data[index2].Sujeto);
-        } else if (test === "TSST") {
+        } else if (name === "TSST") {
           plot_radar(questiondata[index2].Cuestionarios["TSST"],data[index2].Sujeto);
-        } else if (test === "Medi 2") {
+        } else if (name === "Medi 2") {
           plot_radar(questiondata[index2].Cuestionarios["Medi 2"],data[index2].Sujeto);
-        } else if (test === "Fun") {
+        } else if (name === "FUN") {
           plot_radar(questiondata[index2].Cuestionarios["Fun"],data[index2].Sujeto);
-        } else if (test === "Base") {
+        } else if (name === "Base") {
           plot_radar(questiondata[index2].Cuestionarios["Base"],data[index2].Sujeto);
         } else {
-          console.error("Invalid test value:", test);
+          console.error("Invalid test value:", name);
         }
         
         colorV.push(color)
-            plot_chart_segments(edadata1[index2],questiondata[index2],1 ,"EDA",test,_this.signal);
-            plot_chart_segments(data[index2],questiondata[index2],2 ,"TEMP",test,_this.signal);
-            plot_chart_segments(bvpdata[index2],questiondata[index2],3 ,"BVP",test,_this.signal);
+            plot_chart_segments(edadata1[index2],questiondata[index2],1 ,"EDA",name,_this.nameSignal);
+            plot_chart_segments(data[index2],questiondata[index2],2 ,"TEMP",name,_this.nameSignal);
+            plot_chart_segments(bvpdata[index2],questiondata[index2],3 ,"BVP",name,_this.nameSignal);
             plot_segments(edadata1[index2],questiondata[index2],colorV)
            
            
@@ -415,7 +399,7 @@ const yAxis = d3.axisLeft(yLine);
   // Agrega un rectángulo para cada color
   console.log('key' , key)
   legend.append('rect')
-    .attr('x', 0)
+    .attr('x', 230)
     .attr('y', index * 20) // Ajusta el espacio vertical entre las entradas
     .attr('width', 10)
     .attr('height', 10)
@@ -423,72 +407,72 @@ const yAxis = d3.axisLeft(yLine);
 
   // Agrega texto para cada color
   legend.append('text')
-    .attr('x', 15)
+    .attr('x', 250)
     .attr('y', 10 + index * 20) // Ajusta el espacio vertical entre el texto y el rectángulo
-    .text(`${key} ${name}`)
+    .text(`${key}`)
     .style('font-size', '12px')
     .attr('alignment-baseline', 'middle');
 });
 
     });
   }
-  private loadClusterData(type: string, number: number, metric: string): void {
-    const url = `assets/${type}_cluster/${type}_N_Cluster_${number}_${metric}.json`;
-
-    d3.json<ClusterData>(url).then(data => {
-      if (data === undefined) {
-        console.error(`No data loaded from ${url}.`);
-        return;
-      }
-      this.clusters.push({ type, metric, data });
-      console.log(`Loaded data from ${url}`);
-      // Process the data or update visualization here
-      // Example: this.updateVisualization();
-    }).catch(error => {
-      console.error(`Failed to load data from ${url}`, error);
-    });
-  }
-  private async createChart() {
-    // Your existing D3 code here
-    this.DataService.loadData();  
-    this.DataService.tempData$.subscribe(data => {
-      this.data = data;
-      // Aquí puedes usar this.data en tu componente
-      const values = this.data;
-      
-     let name:string = "autoencoder_tsst_pca_eda" ;
-    
-      this.pointPlot(values, name,this.prueba,this.signal);
-     
-    
-           
-      
-  
-    });
-   
-    // Process filtered EDA data for visualization
-    
-  
-}
-
-ngOnInit(): void {
-  if (isPlatformBrowser(this.platformId)) {
-    this.createChart();
-    const types = ["complete", "segments", "fun", "tsst"];
-    const numbers = [2, 3, 4, 5]; // Cluster numbers
-
-    types.forEach(type => {
-      numbers.forEach(number => {
-        ['dtw', 'softdtw'].forEach(metric => {
-          this.loadClusterData(type, number, metric);
-        });
+  private loadClusterData(type: string, metric: string,signal:string): void {
+      const url = `assets/ae-cluster/autoencoder_${type}_${metric}_${signal}_clusters.json`;
+      console.log(url)
+      d3.json<ClusterData>(url).then(data => {
+        if (data === undefined) {
+          console.error(`No data loaded from ${url}.`);
+          return;
+        }
+        this.clusters.push({ type, metric, data });
+        console.log(`Loaded data from ${url}`);
+        // Process the data or update visualization here
+        // Example: this.updateVisualization();
+      }).catch(error => {
+        console.error(`Failed to load data from ${url}`, error);
       });
-    });
+    }
+    private async createChart() {
+      // Your existing D3 code here
+      this.DataService.loadData();  
+      this.DataService.tempData$.subscribe(data1 => {
+        this.data = data1;
+        // Aquí puedes usar this.data en tu componente
+        const values = this.data;
+        
+       let name:string = "eda_pca" ;
+      
+        this.pointPlot(values, name,this.prueba,this.signal);
+       
+      
+             
+        
+    
+      });
+     
+      // Process filtered EDA data for visualization
+      
+    
   }
   
-  
-}
-
+  ngOnInit(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      this.createChart();
+      const types = ["tsst", "fun"];
+      const signalss = ["all"]; // Cluster numbers
+      signalss.forEach(signal => {
+        types.forEach(type => {
+        
+            ['pca', 'tsne','umap'].forEach(metric => {
+              this.loadClusterData(type, metric,signal);
+            });
+        
+        });
+      
+    });
+      
+    }
+  }
 }
 let globalMaxY = 0;
 let GlobalData : any[][]=[];
@@ -1059,10 +1043,21 @@ async function plot_chart_segments(data: SujetoData , questionData : SujetoQuest
         console.error("Loaded JSON is undefined or null");
         return;
     }
-      const pruebaName = test;
+    function capitalizeFirstLetter(text:string) :string {
+      if (!text) return ''; // Si el texto está vacío, retorna una cadena vacía
+      return text.charAt(0).toUpperCase() + text.slice(1); // Convierte la primera letra y concatena el resto
+    }
+    let pruebaName:string
+    if(test == "FUN"){
+      pruebaName = "Fun";
+      console.log("testing differ ",pruebaName)
+    }else{
+      pruebaName = test.toUpperCase();
+      console.log("testing anme ",pruebaName)
+    }
   const prueba = segmento.Pruebas.find((p) => p.Prueba === pruebaName);
   
-  console.log("Sujetos", SujetosGlobal)
+  
   // Verificar si la prueba fue encontrada
   if (!prueba) {
     console.error("Loaded JSON is undefined or null");
@@ -1084,7 +1079,7 @@ async function plot_chart_segments(data: SujetoData , questionData : SujetoQuest
           d3.min(fechasFiltradasSolo) as Date,
           d3.max(fechasFiltradasSolo) as Date
         ])
-        .range([0, width_focus]); 
+        .range([0, containerWidth-60]); 
         
         // Escala Y para el gráfico secundario temporal
         const yScaleSelected = d3.scaleLinear()
@@ -1140,7 +1135,7 @@ async function plot_chart_segments(data: SujetoData , questionData : SujetoQuest
         let zoom = d3.zoom()
        
           .scaleExtent([1, 3])
-          .translateExtent([[10, 0], [containerWidth, containerHeight]]) // Set zoom scale range
+          .translateExtent([[10, 0], [containerWidth-20, containerHeight]]) // Set zoom scale range
           .on("zoom", zoomed) as any;
         let overviewSvg = newGridTile.select<SVGGElement>("svg g");
         
@@ -1155,7 +1150,7 @@ async function plot_chart_segments(data: SujetoData , questionData : SujetoQuest
               .append("g")
               .attr("width", containerWidth)
               .attr("height", containerHeight )
-              .attr("transform", `translate(30,-10)`);
+              .attr("transform", `translate(30,0)`);
               if (signalColor === "eda") {
                 overviewSvg2 = d3.select(".eda-grid-tile .scrollable-container svg g").append("rect")
                 .attr("x", 0)  // Top-left corner of the rectangle
@@ -1233,7 +1228,7 @@ async function plot_chart_segments(data: SujetoData , questionData : SujetoQuest
       // Add X and Y axes only the first time
       overviewSvg.append("g")
       .attr("class","x-axis")
-        .attr("transform", `translate(0,${containerHeight-20})`)
+        .attr("transform", `translate(0,${containerHeight-30})`)
         .call(d3.axisBottom(xScaleSelected));
   
       overviewSvg.append("g")
@@ -1246,6 +1241,11 @@ async function plot_chart_segments(data: SujetoData , questionData : SujetoQuest
         .transition() // Add a smooth transition
         .duration(500)
         .call(d3.axisLeft(yScaleSelectedNew).ticks(4));
+      overviewSvg.select<SVGGElement>(".x-axis")
+      .transition()
+      .duration(500)
+          
+          .call(d3.axisBottom(xScaleSelected));
     }
     const tooltip = d3.select("body").append("div")
       .style("position", "absolute")
@@ -1413,7 +1413,7 @@ async function plot_chart_segments(data: SujetoData , questionData : SujetoQuest
                 // Highlight the hovered line
                 d3.selectAll(`.bvp-grid-tile .scrollable-container svg g path`)
                 .style("stroke","#9AA6B2")
-                .style("opacity", 0.5); 
+                .style("opacity", 0.9); 
    
                 d3.select(this)
                 .style("stroke", "black")
@@ -1521,10 +1521,10 @@ function plot_radar(cuestionarios: Cuestionarios, sujeto:string) {
   const radarSvg = d3
     .select(".radar-grid-tile .scrollable-container")
     .append("svg")
-    .attr("width", width)
+    .attr("width", width + 150)
     .attr("height", height)
     .append("g")
-    .attr("transform", `translate(${centerX / 2},${centerY / 3})`);
+    .attr("transform", `translate(${centerX  } ,${centerY / 2})`);
 
   // Scale for radial distances
   const radialScale = d3.scaleLinear().domain([0, 10]).range([0, maxRadius]);
@@ -1648,7 +1648,41 @@ function plot_radar(cuestionarios: Cuestionarios, sujeto:string) {
   );
 
 
-  
-  offsetX += 5;
-  console.log("Radar data plotted:", datas);
+  // Add feature values below the radar chart
+
+
+featuress.forEach(f => {
+  const value = cuestionarios[f as keyof typeof cuestionarios];
+  datas.push({ feature: f, value: value !== null ? Math.round(value) : 0 });
+});
+
+
+let table: d3.Selection<HTMLTableElement, unknown, HTMLElement, any> =
+    d3.select(".radar-grid-tile .scrollable-container").select("table");
+  if (table.empty()) {
+    // If table doesn't exist, create it
+    table = d3
+      .select(".radar-grid-tile .scrollable-container")
+      .append("table")
+      .attr("style", "margin-top: 20px; border-collapse: collapse; width: 100%; text-align: center;");
+    
+    // Add table header
+    const headerRow = table.append("thead").append("tr");
+    headerRow.append("th").text("Feature").attr("style", "border: 1px solid black; padding: 5px;");
+    headerRow.append("th").text("Value").attr("style", "border: 1px solid black; padding: 5px;");
+  }
+
+  // Clear existing table rows and update values
+  table.select("tbody").remove(); // Remove old body if exists
+  const tbody = table.append("tbody");
+  const rows = tbody.selectAll("tr")
+    .data(datas)
+    .join("tr");
+
+  rows.append("td")
+    .text(d => d.feature)
+    .attr("style", "border: 1px solid black; padding: 5px;");
+  rows.append("td")
+    .text(d => d.value)
+    .attr("style", "border: 1px solid black; padding: 5px;");
 }

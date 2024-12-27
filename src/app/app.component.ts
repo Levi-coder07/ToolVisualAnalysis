@@ -60,7 +60,7 @@ export class AppComponent {
   }
   
   selectedCheckbox: string = "eda"; // Track which checkbox is selected
-
+  selectedCheckbox2: string = "pca"; // Track which checkbox is selected
   onCheckboxChange(selected: string): void {
     // Update the selected checkbox
     this.selectedCheckbox = selected;
@@ -94,7 +94,7 @@ export class AppComponent {
   }
   onPruebaClicked(prueba: string) {
     console.log('Prueba clicked:', prueba);
-    this.selectedPrueba = prueba;
+    this.selectedPrueba = prueba.toLowerCase();
     if (this.pcaVisualization) {
       this.pcaVisualization.onButtonClick(this.selectedPrueba);
     } // Pass the clicked "prueba" to the other component
@@ -104,12 +104,13 @@ export class AppComponent {
   }
   onOptionChange(option: string) {
     
-   
+   this.selectedCheckbox2 = option;
     if (this.pcaVisualization) {
-      this.pcaVisualization.optionChanged(this.selectedOption);
+      this.pcaVisualization.optionChanged(option);
     }
-     
-    this.aeVisualization.optionChanged(this.selectedOption);
+     if(this.aeVisualization) {
+    this.aeVisualization.optionChanged(option);
   }
+}
 }
 
